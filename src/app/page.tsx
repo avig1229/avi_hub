@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { projects } from '@/data/projects';
 
 export default function Home() {
   return (
@@ -28,22 +29,22 @@ export default function Home() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <h2 className="text-3xl font-bold text-gray-900 mb-12">Featured Projects</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[1, 2, 3].map((project, index) => (
+          {projects.map((project, index) => (
             <motion.div
-              key={project}
+              key={project.slug}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
             >
-              <div className="aspect-video bg-gray-100"></div>
+              <div className="aspect-video bg-gray-100 overflow-hidden">
+                <img src={project.cover} alt={project.name} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" />
+              </div>
               <div className="p-6">
-                <h3 className="text-xl font-semibold mb-2">Project {project}</h3>
-                <p className="text-gray-600 mb-4">
-                  Brief description of the project and its impact.
-                </p>
+                <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
+                <p className="text-gray-600 mb-4">{project.tagline}</p>
                 <Link
-                  href={`/projects/${project}`}
+                  href={`/projects/${project.slug}`}
                   className="text-blue-600 hover:text-blue-700 inline-flex items-center"
                 >
                   View Project

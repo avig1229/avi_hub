@@ -2,33 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-
-const projects = [
-  {
-    id: 1,
-    title: 'Project One',
-    description: 'A comprehensive redesign of a mobile application focusing on user experience and accessibility.',
-    category: 'UI/UX Design',
-    image: '/project1.jpg',
-    tags: ['Mobile App', 'UX Research', 'Prototyping'],
-  },
-  {
-    id: 2,
-    title: 'Project Two',
-    description: 'Brand identity and visual design system for a sustainable fashion startup.',
-    category: 'Branding',
-    image: '/project2.jpg',
-    tags: ['Brand Identity', 'Visual Design', 'Design System'],
-  },
-  {
-    id: 3,
-    title: 'Project Three',
-    description: 'Interactive web platform for creative professionals to showcase their portfolios.',
-    category: 'Web Design',
-    image: '/project3.jpg',
-    tags: ['Web Design', 'Interaction Design', 'Frontend'],
-  },
-];
+import { projects } from '@/data/projects';
 
 export default function Projects() {
   return (
@@ -49,36 +23,38 @@ export default function Projects() {
         <div className="grid grid-cols-1 gap-12">
           {projects.map((project, index) => (
             <motion.article
-              key={project.id}
+              key={project.slug}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="grid md:grid-cols-2 gap-8">
-                <div className="aspect-video bg-gray-100"></div>
+                <div className="aspect-video bg-gray-100 overflow-hidden">
+                  <img src={project.cover} alt={project.name} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" />
+                </div>
                 <div className="p-8">
                   <div className="mb-4">
                     <span className="text-sm font-medium text-blue-600">
-                      {project.category}
+                      {project.tagline}
                     </span>
                   </div>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                    {project.title}
+                    {project.name}
                   </h2>
                   <p className="text-gray-600 mb-6">{project.description}</p>
                   <div className="flex flex-wrap gap-2 mb-8">
-                    {project.tags.map((tag) => (
+                    {project.tools.map((tool) => (
                       <span
-                        key={tag}
+                        key={tool}
                         className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm"
                       >
-                        {tag}
+                        {tool}
                       </span>
                     ))}
                   </div>
                   <Link
-                    href={`/projects/${project.id}`}
+                    href={`/projects/${project.slug}`}
                     className="inline-flex items-center text-blue-600 hover:text-blue-700"
                   >
                     View Case Study
