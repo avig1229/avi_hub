@@ -77,11 +77,14 @@ export default function Resume() {
                 className="flex flex-col items-start md:items-end gap-2"
               >
                 <p className="text-gray-600">San Francisco, CA</p>
-                <a href="mailto:min-kuan@uni.minerva.edu" className="text-primary hover:text-accent transition-colors">
-                  min-kuan@uni.minerva.edu
+                <a href="mailto:avi@merakicorp.co" className="text-primary hover:text-accent transition-colors">
+                  avi@merakicorp.co
                 </a>
-                <a href="https://linkedin.com/in/avigu" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-accent transition-colors">
+                <a href="https://www.linkedin.com/in/avigu/" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-accent transition-colors">
                   linkedin.com/in/avigu
+                </a>
+                <a href="https://www.instagram.com/aviggu/" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-accent transition-colors">
+                  instagram.com/aviggu
                 </a>
                 <a href="https://shrma.notion.site" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-accent transition-colors">
                   shrma.notion.site
