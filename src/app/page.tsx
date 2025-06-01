@@ -3,8 +3,25 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { projects } from '@/data/projects';
+import { SiFigma, SiAdobe, SiPython, SiFlutter, SiVuedotjs, SiJavascript, SiNotion, SiMiro } from 'react-icons/si';
+import { FaCuttlefish, FaPaintBrush, FaFilm, FaCode } from 'react-icons/fa';
 
 export default function Home() {
+  const technicalSkills = [
+    { icon: SiFigma, name: 'Figma' },
+    { icon: SiAdobe, name: 'Adobe Suite' },
+    { icon: FaPaintBrush, name: 'Procreate' },
+    { icon: FaFilm, name: 'Final Cut Pro' },
+    { icon: FaCuttlefish, name: 'CLO 3D' },
+    { icon: SiPython, name: 'Python' },
+    { icon: FaCode, name: 'Fullstack Web Development' },
+    { icon: SiFlutter, name: 'Flutter' },
+    { icon: SiVuedotjs, name: 'Vue.js' },
+    { icon: SiJavascript, name: 'JavaScript' },
+    { icon: SiNotion, name: 'Notion' },
+    { icon: SiMiro, name: 'Miro' }
+  ];
+
   return (
     <div className="pt-16">
       {/* Hero Section */}
@@ -16,11 +33,10 @@ export default function Home() {
           className="text-center"
         >
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            Hi, I&apos;m <span className="text-blue-600">Your Name</span>
+            Hi, I&apos;m <span className="text-blue-600">AVIGU</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            A passionate designer creating beautiful and functional experiences.
-            Currently seeking opportunities as a Design Studio Intern.
+            I am a clothing designer, graphic designer, and full-stack web developer. I am passionate about fashion and eagerly looking for opportunities to redefine the Taiwanese fashion scene. The following are the main projects I&apos;ve been working on!
           </p>
         </motion.div>
       </section>
@@ -72,25 +88,38 @@ export default function Home() {
       <section className="bg-gray-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-12">Skills & Expertise</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             {[
-              'UI/UX Design',
-              'Visual Design',
-              'Prototyping',
-              'User Research',
-              'Design Systems',
-              'Figma',
-              'Adobe Creative Suite',
-              'HTML/CSS',
-            ].map((skill, index) => (
+              'Brand Management',
+              'Marketing Strategizing',
+              'Clothing Product Development',
+              'Brand Data Analytics',
+            ].map((category, index) => (
               <motion.div
-                key={skill}
+                key={category}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-xl p-6 shadow-sm"
+                className="bg-white rounded-xl p-8 shadow-sm flex items-center justify-center text-center"
               >
-                <h3 className="font-semibold text-gray-900">{skill}</h3>
+                <h3 className="font-semibold text-gray-900 text-lg">{category}</h3>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Technical Skills Grid */}
+          <h3 className="text-2xl font-bold text-gray-900 mb-8">Technical Skills</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8">
+            {technicalSkills.map((skill, index) => (
+              <motion.div
+                key={skill.name}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                className="flex flex-col items-center bg-white rounded-xl p-6 shadow-sm"
+              >
+                <skill.icon className="text-4xl mb-3 text-gray-700" />
+                <span className="font-medium text-gray-900">{skill.name}</span>
               </motion.div>
             ))}
           </div>

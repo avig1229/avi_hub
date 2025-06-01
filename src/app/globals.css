@@ -1,18 +1,42 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 26, 54, 93; /* primary color */
-  --background-rgb: 248, 250, 252; /* background color */
+@layer base {
+  :root {
+    --foreground-rgb: 0, 0, 0;
+    --background-rgb: 255, 255, 255;
+  }
+
+  body {
+    color: rgb(var(--foreground-rgb));
+    background: rgb(var(--background-rgb));
+    min-height: 100vh;
+  }
+
+  /* Typography */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif tracking-wide;
+  }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
-  min-height: 100vh;
+@layer components {
+  /* Link styles */
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  /* Button styles */
+  button {
+    @apply transition-colors duration-200;
+  }
+
+  /* Form element styles */
+  input, textarea, select {
+    @apply transition-colors duration-200;
+  }
 }
 
 /* Smooth scrolling */
@@ -22,57 +46,27 @@ html {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: theme('colors.background.DEFAULT');
+  background: theme('colors.white');
 }
 
 ::-webkit-scrollbar-thumb {
-  background: theme('colors.primary.light');
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: theme('colors.primary.DEFAULT');
+  background: theme('colors.black');
 }
 
 /* Focus styles */
 *:focus-visible {
-  outline: 2px solid theme('colors.accent.DEFAULT');
+  outline: 1px solid theme('colors.black');
   outline-offset: 2px;
 }
 
 /* Selection styles */
 ::selection {
-  background: theme('colors.accent.DEFAULT');
+  background: theme('colors.black');
   color: white;
-}
-
-/* Typography */
-h1, h2, h3, h4, h5, h6 {
-  @apply font-bold tracking-tight text-primary;
-}
-
-/* Highlight text */
-.highlight {
-  @apply font-cursive text-accent;
-}
-
-/* Link styles */
-a {
-  @apply transition-colors duration-200 text-primary hover:text-accent;
-}
-
-/* Button styles */
-button {
-  @apply transition-colors duration-200;
-}
-
-/* Form element styles */
-input, textarea, select {
-  @apply transition-colors duration-200;
 }
 
 /* Animation classes */
