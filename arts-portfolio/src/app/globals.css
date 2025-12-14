@@ -1,0 +1,76 @@
+@import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #FDFCF8;
+  --foreground: #3E3832;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Keeping default for system pref, but these will be overridden by next-themes classes */
+    --background: #1c1b1a;
+    --foreground: #e6e1d6;
+  }
+}
+
+/* Light Theme (Warm Beige) */
+:root {
+  --background: #FDFCF8;
+  /* Very Light Warm White */
+  --foreground: #3E3832;
+  /* Deep Warm Charcoal */
+  --accent: #D4CDC3;
+  /* Beige Accent */
+}
+
+/* Dark Theme (Warm Grey/Black) - Applied via class="dark" */
+/* Dark Theme (Warm Grey/Black) - Applied via class="dark" */
+.dark {
+  --background: #1C1B1A;
+  /* Deep Warm Black */
+  --foreground: #E6E1D6;
+  /* Warm Off-White */
+  --accent: #4A4540;
+  /* Dark Grey Accent */
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background-color: #000;
+  color: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  ::selection {
+    background-color: #fff;
+    color: #000;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-mono), monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-sans), sans-serif;
+}
