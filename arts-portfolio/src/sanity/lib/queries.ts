@@ -18,5 +18,13 @@ export const PROJECT_QUERY = groq`*[_type == "project" && slug.current == $slug]
   date,
   mainImage,
   content,
-  gallery
+  content,
+  gallery[]{
+    ...,
+    _type == "file" => {
+      "url": asset->url,
+      "mimeType": asset->mimeType,
+      "caption": caption
+    }
+  }
 }`;

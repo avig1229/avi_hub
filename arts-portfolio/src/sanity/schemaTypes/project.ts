@@ -54,9 +54,22 @@ export default defineType({
         }),
         defineField({
             name: 'gallery',
-            title: 'Gallery',
+            title: 'Gallery (Images & Videos)',
             type: 'array',
-            of: [{ type: 'image' }]
+            of: [
+                { type: 'image' },
+                {
+                    type: 'file',
+                    options: { accept: 'video/*' },
+                    fields: [
+                        {
+                            name: 'caption',
+                            type: 'string',
+                            title: 'Video Caption'
+                        }
+                    ]
+                }
+            ]
         })
     ],
     preview: {
