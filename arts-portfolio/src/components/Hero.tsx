@@ -13,15 +13,7 @@ export default function Hero() {
                         transition={{ duration: 0.8, ease: "circOut" }}
                         className="block"
                     >
-                        DIGITAL
-                    </motion.span>
-                    <motion.span
-                        initial={{ y: "100%" }}
-                        animate={{ y: 0 }}
-                        transition={{ duration: 0.8, ease: "circOut", delay: 0.1 }}
-                        className="block"
-                    >
-                        REALM
+                        shRma
                     </motion.span>
                 </h1>
             </div>
@@ -32,7 +24,7 @@ export default function Hero() {
                     transition={{ delay: 0.5, duration: 0.8 }}
                     className="text-xl md:text-2xl max-w-2xl font-mono text-gray-600 dark:text-gray-400"
                 >
-                    Explorations in creative coding, generative design, and interactive media.
+                    Passionate product designer bridging tech, design, and fashion to create intuitive digital experiences.
                 </motion.p>
                 <motion.div
                     initial={{ opacity: 0 }}

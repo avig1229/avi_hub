@@ -18,10 +18,13 @@ export default function AboutPage() {
                 <div className="space-y-8">
                     <div className="text-xl md:text-2xl font-medium leading-relaxed">
                         <p className="mb-6">
-                            I am a digital artist and creative technologist based in [Location]. My work explores the boundaries between code, design, and human interaction.
+                            Hi, this is Avi! I'm a passionate product designer with a keen eye for user-centered design and a drive for innovation, creation, and curation. With experience spanning across tech, design, and fashion industry, I specialize in creating intuitive and engaging digital experiences that solve real-world problems.
+                        </p>
+                        <p className="mb-6">
+                            My approach combines thorough user research, creative problem-solving, and a deep understanding of both UI and UX principles. I'm proficient in tools like Figma, Framer, Adobe Creative Suite, and have hands-on experience with front-end technologies including HTML, CSS, JavaScript, and Flutter.
                         </p>
                         <p className="text-gray-500">
-                            Currently studying "Arts in Digital Realm".
+                            I'm always excited to take on new challenges and collaborate on projects that push the boundaries of design. Let's create something amazing together!
                         </p>
                     </div>
 
