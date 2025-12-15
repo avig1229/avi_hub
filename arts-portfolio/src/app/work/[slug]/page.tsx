@@ -75,6 +75,7 @@ export default async function ProjectPage({
                             {
                                 (project.gallery?.length || 0) +
                                 (project.mainImage ? 1 : 0) +
+                                (project.links?.length || 0) +
                                 (project.subsections?.reduce((acc: number, sec: any) => acc + (sec.gallery?.length || 0), 0) || 0)
                             } Pieces
                         </span>

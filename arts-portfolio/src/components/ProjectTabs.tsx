@@ -47,7 +47,7 @@ export default function ProjectTabs({ mainContent, mainGallery, subsections = []
             content: mainContent,
             gallery: mainGallery
         },
-        ...subsections.map(section => ({
+        ...(subsections || []).map(section => ({
             title: section.title,
             content: section.description,
             gallery: section.gallery

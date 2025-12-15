@@ -10,6 +10,10 @@ export const PROJECTS_QUERY = groq`*[_type == "project"] | order(date desc) {
   mainImage,
   content,
   "galleryCount": count(gallery),
+  "linksCount": count(links),
+  subsections[]{
+    gallery
+  }
 }`;
 
 // Get a single project by slug

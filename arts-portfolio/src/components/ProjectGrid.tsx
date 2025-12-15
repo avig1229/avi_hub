@@ -6,11 +6,16 @@ import { urlFor } from '@/sanity/lib/image';
 export default async function ProjectGrid() {
     const projects = await client.fetch(PROJECTS_QUERY);
 
-    // Calculate total pieces (gallery items + main image for each project)
+    // Calculate total pieces (gallery items + main image + subsection items for each project)
     const totalPieces = projects.reduce((acc: number, project: any) => {
         const galleryCount = project.galleryCount || 0;
         const mainImageCount = project.mainImage ? 1 : 0;
-        return acc + galleryCount + mainImageCount;
+        const linksCount = project.linksCount || 0;
+        const subsectionCount = project.subsections?.reduce((subAcc: number, sub: any) => {
+            return subAcc + (sub.gallery?.length || 0);
+        }, 0) || 0;
+
+        return acc + galleryCount + mainImageCount + subsectionCount + linksCount;
     }, 0);
 
     return (
