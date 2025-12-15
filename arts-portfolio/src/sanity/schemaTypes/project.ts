@@ -33,6 +33,7 @@ export default defineType({
                     { title: 'Installation', value: 'Installation' },
                     { title: 'Fashion Design', value: 'Fashion Design' },
                     { title: 'Graphic Design', value: 'Graphic Design' },
+                    { title: 'Brand Design', value: 'Brand Design' },
                 ],
             },
         }),
