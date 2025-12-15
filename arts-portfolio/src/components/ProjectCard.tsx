@@ -9,9 +9,10 @@ interface ProjectCardProps {
     slug: string;
     image?: string;
     index?: number;
+    summary?: string;
 }
 
-export default function ProjectCard({ title, category, slug, image, index = 0 }: ProjectCardProps) {
+export default function ProjectCard({ title, category, slug, image, index = 0, summary }: ProjectCardProps) {
     return (
         <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -39,7 +40,13 @@ export default function ProjectCard({ title, category, slug, image, index = 0 }:
                             <span className="text-xs uppercase tracking-widest">No Image</span>
                         </motion.div>
                     )}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300 pointer-events-none" />
+
+                    {/* Dark overlay with summary */}
+                    <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-6 text-center">
+                        <p className="text-white text-sm leading-relaxed line-clamp-5">
+                            {summary}
+                        </p>
+                    </div>
                 </div>
 
                 <div className="flex justify-between items-baseline border-b border-transparent group-hover:border-black dark:group-hover:border-white transition-colors pb-1">

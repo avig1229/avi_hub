@@ -31,6 +31,8 @@ export default defineType({
                     { title: 'Video', value: 'Video' },
                     { title: 'Creative Coding', value: 'Creative Coding' },
                     { title: 'Installation', value: 'Installation' },
+                    { title: 'Fashion Design', value: 'Fashion Design' },
+                    { title: 'Graphic Design', value: 'Graphic Design' },
                 ],
             },
         }),
@@ -53,11 +55,35 @@ export default defineType({
             type: 'blockContent',
         }),
         defineField({
+            name: 'links',
+            title: 'Project Links',
+            type: 'array',
+            of: [
+                {
+                    type: 'object',
+                    fields: [
+                        { name: 'title', title: 'Link Title', type: 'string' },
+                        { name: 'url', title: 'URL', type: 'url' },
+                    ],
+                },
+            ],
+        }),
+        defineField({
             name: 'gallery',
             title: 'Gallery (Images & Videos)',
             type: 'array',
             of: [
-                { type: 'image' },
+                {
+                    type: 'image',
+                    options: { hotspot: true },
+                    fields: [
+                        {
+                            name: 'caption',
+                            type: 'string',
+                            title: 'Caption',
+                        },
+                    ],
+                },
                 {
                     type: 'file',
                     options: { accept: 'video/*' },
@@ -66,6 +92,58 @@ export default defineType({
                             name: 'caption',
                             type: 'string',
                             title: 'Video Caption'
+                        }
+                    ]
+                }
+            ]
+        }),
+        defineField({
+            name: 'subsections',
+            title: 'Subsections (Seasons/Chapters)',
+            type: 'array',
+            of: [
+                {
+                    type: 'object',
+                    title: 'Section',
+                    fields: [
+                        {
+                            name: 'title',
+                            title: 'Section Title',
+                            type: 'string',
+                        },
+                        {
+                            name: 'description',
+                            title: 'Description',
+                            type: 'blockContent',
+                        },
+                        {
+                            name: 'gallery',
+                            title: 'Section Gallery',
+                            type: 'array',
+                            of: [
+                                {
+                                    type: 'image',
+                                    options: { hotspot: true },
+                                    fields: [
+                                        {
+                                            name: 'caption',
+                                            type: 'string',
+                                            title: 'Caption',
+                                        },
+                                    ],
+                                },
+                                {
+                                    type: 'file',
+                                    options: { accept: 'video/*' },
+                                    fields: [
+                                        {
+                                            name: 'caption',
+                                            type: 'string',
+                                            title: 'Video Caption'
+                                        }
+                                    ]
+                                }
+                            ]
                         }
                     ]
                 }
