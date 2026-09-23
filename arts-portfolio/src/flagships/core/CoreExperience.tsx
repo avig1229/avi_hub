@@ -139,8 +139,6 @@ function Origin({ year, story }: { year?: string; story: string[] }) {
                                 from={start + i * seg}
                                 to={start + (i + 1) * seg}
                                 last={i === story.length - 1}
-                                index={i}
-                                total={story.length}
                             >
                                 {text}
                             </StoryLine>
@@ -171,16 +169,12 @@ function StoryLine({
     from,
     to,
     last,
-    index,
-    total,
     children,
 }: {
     p: MotionValue<number>;
     from: number;
     to: number;
     last: boolean;
-    index: number;
-    total: number;
     children: React.ReactNode;
 }) {
     const fade = (to - from) * 0.25;
@@ -193,9 +187,6 @@ function StoryLine({
 
     return (
         <motion.div className="absolute inset-0 flex flex-col justify-center" style={{ opacity, y }}>
-            <span className="font-mono text-xs tracking-[0.3em] text-[#e6e1d6]/40 mb-4">
-                {String(index + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
-            </span>
             <p className="text-xl md:text-3xl leading-snug md:leading-tight font-medium tracking-tight max-w-[32ch]">
                 {children}
             </p>
