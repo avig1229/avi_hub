@@ -58,8 +58,9 @@ Numbering refers to the Sanity gallery order (1 = first gallery image).
 
 ### Sanity mapping
 - `content` → Origin back story (already there)
-- `subsections` → one per series: Sashiko / Graffiti / Experimentals, each
-  with its pieces in `gallery` (captions per piece)
+- Each gallery image has a **Series** dropdown (CORE only). Untagged pieces go to
+  Experimentals; the original CORE001–008 uploads are matched by file name.
+- Each gallery image has a **Story**, shown on hover/tap.
 - Anatomy hotspot copy: new small field or hardcoded, whichever is less work
   (decide when building)
 

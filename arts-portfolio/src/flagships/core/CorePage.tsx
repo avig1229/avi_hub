@@ -1,41 +1,41 @@
 import { groq } from 'next-sanity';
 import { client } from '@/sanity/lib/client';
-import { LOCAL_PIECES, SERIES } from './content';
+import { DEFAULT_SERIES, SERIES, type SeriesId } from './content';
 import CoreExperience, { type Piece, type SeriesData } from './CoreExperience';
 
 const CORE_QUERY = groq`*[_type == "project" && slug.current == "core-collection"][0] {
   title,
   date,
   content,
-  "pieces": gallery[_type == "image"]{
+  "pieces": gallery[_type == "image" && defined(asset)]{
     "url": asset->url,
+    "file": asset->originalFilename,
     caption,
     story,
+    series,
     "width": asset->metadata.dimensions.width,
     "height": asset->metadata.dimensions.height
-  },
-  subsections[]{
-    title,
-    "pieces": gallery[_type == "image"]{
-      "url": asset->url,
-      caption,
-      story,
-    story,
-      "width": asset->metadata.dimensions.width,
-      "height": asset->metadata.dimensions.height
-    }
   }
 }`;
 
 type Block = { _type: string; children?: { text?: string }[] };
 
+type CorePiece = Piece & { file?: string; series?: string };
+
 type CoreData = {
     title: string;
     date?: string;
     content?: Block[];
-    pieces?: Piece[];
-    subsections?: { title?: string; pieces?: Piece[] }[];
+    pieces?: CorePiece[];
 };
+
+const isSeries = (v: unknown): v is SeriesId => SERIES.some((s) => s.id === v);
+
+function seriesOf(piece: CorePiece): SeriesId {
+    if (isSeries(piece.series)) return piece.series;
+    const legacy = SERIES.find((s) => (s.legacyFiles as readonly string[]).includes(piece.file ?? ''));
+    return legacy?.id ?? DEFAULT_SERIES;
+}
 
 export default async function CorePage() {
     const data: CoreData | null = await client.fetch(CORE_QUERY);
@@ -45,17 +45,11 @@ export default async function CorePage() {
         .map((b) => (b.children ?? []).map((c) => c.text ?? '').join('').trim())
         .filter(Boolean);
 
-    // Prefer Sanity subsections named after each series; fall back to fixed
-    // gallery positions until those subsections exist.
-    const series: SeriesData[] = SERIES.map((s) => {
-        const sub = data?.subsections?.find(
-            (x) => x.title?.trim().toLowerCase() === s.title.toLowerCase(),
-        );
-        const pieces = sub?.pieces?.length
-            ? sub.pieces
-            : s.fallback.map((n) => data?.pieces?.[n - 1]).filter((p): p is Piece => !!p);
-        return { id: s.id, pieces: [...pieces, ...LOCAL_PIECES[s.id]] };
-    });
+    // Group in gallery order, so reordering in Sanity reorders the page.
+    const series: SeriesData[] = SERIES.map((s) => ({
+        id: s.id,
+        pieces: (data?.pieces ?? []).filter((p) => seriesOf(p) === s.id),
+    }));
 
     return <CoreExperience year={data?.date} story={story} series={series} />;
 }

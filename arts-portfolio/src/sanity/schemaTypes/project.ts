@@ -90,6 +90,22 @@ export default defineType({
                             rows: 4,
                             description: 'A short backstory for this piece. Shown when hovering the piece on flagship pages.',
                         },
+                        {
+                            name: 'series',
+                            type: 'string',
+                            title: 'Series',
+                            description: 'Which CORE series this piece belongs to. Left empty, it goes to Experimentals.',
+                            options: {
+                                list: [
+                                    { title: 'Sashiko', value: 'sashiko' },
+                                    { title: 'Graffiti', value: 'graffiti' },
+                                    { title: 'Experimentals', value: 'experimentals' },
+                                ],
+                                layout: 'radio',
+                                direction: 'horizontal',
+                            },
+                            hidden: ({ document }) => (document?.slug as { current?: string } | undefined)?.current !== 'core-collection',
+                        },
                     ],
                 },
                 {

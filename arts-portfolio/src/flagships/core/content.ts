@@ -64,6 +64,9 @@ export const ANATOMY: AnatomyPart[] = [
     },
 ];
 
+// Each gallery piece's Series dropdown in Sanity decides where it goes.
+// legacyFiles covers the original uploads that predate the dropdown.
+// Anything untagged lands in Experimentals, the catch-all series.
 export const SERIES = [
     {
         id: 'sashiko',
@@ -71,9 +74,7 @@ export const SERIES = [
         kicker: 'Series 01',
         blurb: 'Stitched, patched, mended.',
         accent: '#6b7cff',
-        // Fallback: 1-based Sanity gallery positions, used until the project
-        // has a "Sashiko" subsection.
-        fallback: [5, 6, 8],
+        legacyFiles: ['CORE005.png', 'CORE006.png', 'CORE008.png'],
     },
     {
         id: 'graffiti',
@@ -81,7 +82,7 @@ export const SERIES = [
         kicker: 'Series 02',
         blurb: 'Loud strokes, one gesture each.',
         accent: '#ff2d3d',
-        fallback: [3, 4, 7],
+        legacyFiles: ['CORE003.png', 'CORE004.png', 'CORE007.png'],
     },
     {
         id: 'experimentals',
@@ -89,19 +90,14 @@ export const SERIES = [
         kicker: 'Series 03',
         blurb: 'Everything else the spine wanted to try.',
         accent: '#ff8ad8',
-        fallback: [1, 2],
+        legacyFiles: ['CORE001.png', 'CORE002.png'],
     },
 ] as const;
 
 export type SeriesId = (typeof SERIES)[number]['id'];
 
-// Pieces not in Sanity yet, appended to the end of their series. Remove an
-// entry once that piece is uploaded to Sanity, or it will show twice.
-export const LOCAL_PIECES: Record<SeriesId, { url: string; width: number; height: number; caption?: string; story?: string }[]> = {
-    sashiko: [],
-    graffiti: [],
-    experimentals: [{ url: '/work/core/experimentals-anne.png', width: 1640, height: 2360 }],
-};
+export const DEFAULT_SERIES: SeriesId = 'experimentals';
+
 
 export const pct = (p: Point) => ({
     left: `${(p.x / SPINE.width) * 100}%`,
