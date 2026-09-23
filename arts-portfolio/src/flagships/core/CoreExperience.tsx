@@ -16,13 +16,12 @@ import {
     ANATOMY,
     EYE,
     NAILS,
-    SERIES,
     SOUNDTRACK,
     SPINE,
     VERTEBRAE,
     pct,
     type AnatomyPart,
-    type SeriesId,
+    type SeriesMeta,
 } from './content';
 
 export type Piece = { url: string; caption?: string; story?: string; width: number; height: number };
@@ -32,7 +31,7 @@ export type Piece = { url: string; caption?: string; story?: string; width: numb
 const sanityLoader = ({ src, width, quality }: { src: string; width: number; quality?: number }) =>
     `${src}?w=${width}&q=${quality ?? 80}&auto=format`;
 
-export type SeriesData = { id: SeriesId; pieces: Piece[] };
+export type SeriesData = SeriesMeta & { pieces: Piece[] };
 
 export default function CoreExperience({
     year,
@@ -367,17 +366,17 @@ function Anatomy() {
 function Collection({ series }: { series: SeriesData[] }) {
     return (
         <div className="pb-24">
-            {SERIES.map((meta) => {
-                const pieces = series.find((s) => s.id === meta.id)?.pieces ?? [];
+            {series.map((meta, n) => {
+                const { pieces } = meta;
                 if (!pieces.length) return null;
                 return (
                     <section key={meta.id} id={meta.id} className="max-w-[1400px] mx-auto px-6 md:px-12 py-20">
                         <div className="flex items-baseline gap-4 border-t border-[#e6e1d6]/15 pt-6 mb-12">
                             <span className="font-mono text-xs tracking-[0.3em]" style={{ color: meta.accent }}>
-                                {meta.kicker.toUpperCase()}
+                                SERIES {String(n + 1).padStart(2, '0')}
                             </span>
                             <h2 className="text-4xl md:text-7xl font-bold tracking-tighter">{meta.title}</h2>
-                            <span className="hidden md:block ml-auto text-[#e6e1d6]/50">{meta.blurb}</span>
+                            {meta.blurb && <span className="hidden md:block ml-auto text-[#e6e1d6]/50">{meta.blurb}</span>}
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
                             {pieces.map((piece, i) => (
@@ -399,7 +398,7 @@ function PieceCard({
 }: {
     piece: Piece;
     index: number;
-    series: (typeof SERIES)[number];
+    series: SeriesMeta;
 }) {
     const [open, setOpen] = useState(false);
     const story = piece.story?.trim();

@@ -64,40 +64,43 @@ export const ANATOMY: AnatomyPart[] = [
     },
 ];
 
-// Each gallery piece's Series dropdown in Sanity decides where it goes.
-// legacyFiles covers the original uploads that predate the dropdown.
-// Anything untagged lands in Experimentals, the catch-all series.
-export const SERIES = [
+// Series come from "CORE Series" documents in Sanity. These built-ins supply
+// defaults (blurb, accent, order) for the original three when a Sanity doc
+// with the same slug omits them, and legacyFiles places the original uploads
+// that predate the Series field. Untagged pieces land in Experimentals.
+export type SeriesMeta = { id: string; title: string; blurb?: string; accent: string; order: number };
+
+export const BUILTIN_SERIES: (SeriesMeta & { legacyFiles: string[] })[] = [
     {
         id: 'sashiko',
         title: 'Sashiko',
-        kicker: 'Series 01',
         blurb: 'Stitched, patched, mended.',
         accent: '#6b7cff',
+        order: 1,
         legacyFiles: ['CORE005.png', 'CORE006.png', 'CORE008.png'],
     },
     {
         id: 'graffiti',
         title: 'Graffiti',
-        kicker: 'Series 02',
         blurb: 'Loud strokes, one gesture each.',
         accent: '#ff2d3d',
+        order: 2,
         legacyFiles: ['CORE003.png', 'CORE004.png', 'CORE007.png'],
     },
     {
         id: 'experimentals',
         title: 'Experimentals',
-        kicker: 'Series 03',
         blurb: 'Everything else the spine wanted to try.',
         accent: '#ff8ad8',
+        order: 3,
         legacyFiles: ['CORE001.png', 'CORE002.png'],
     },
-] as const;
+];
 
-export type SeriesId = (typeof SERIES)[number]['id'];
+export const DEFAULT_SERIES = 'experimentals';
 
-export const DEFAULT_SERIES: SeriesId = 'experimentals';
-
+// Accents for new series that don't set one.
+export const FALLBACK_ACCENTS = ['#f2c14e', '#5fd3a8', '#9b8cff', '#ff9f5a'];
 
 export const pct = (p: Point) => ({
     left: `${(p.x / SPINE.width) * 100}%`,

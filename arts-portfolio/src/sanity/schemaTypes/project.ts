@@ -92,18 +92,10 @@ export default defineType({
                         },
                         {
                             name: 'series',
-                            type: 'string',
+                            type: 'reference',
                             title: 'Series',
-                            description: 'Which CORE series this piece belongs to. Left empty, it goes to Experimentals.',
-                            options: {
-                                list: [
-                                    { title: 'Sashiko', value: 'sashiko' },
-                                    { title: 'Graffiti', value: 'graffiti' },
-                                    { title: 'Experimentals', value: 'experimentals' },
-                                ],
-                                layout: 'radio',
-                                direction: 'horizontal',
-                            },
+                            description: 'Which CORE series this piece belongs to. Pick one, or create a new series here. Left empty, it goes to Experimentals.',
+                            to: [{ type: 'coreSeries' }],
                             hidden: ({ document }) => (document?.slug as { current?: string } | undefined)?.current !== 'core-collection',
                         },
                     ],
