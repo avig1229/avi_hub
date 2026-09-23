@@ -8,6 +8,7 @@ import {
     AnimatePresence,
     motion,
     useMotionTemplate,
+    useInView,
     useMotionValue,
     useReducedMotion,
     useScroll,
@@ -15,6 +16,7 @@ import {
     useTransform,
 } from 'framer-motion';
 import type { SeriesMeta } from './content';
+import { enableTilt, tiltX, tiltY, useDeviceTilt } from './useDeviceTilt';
 
 export type Piece = { url: string; caption?: string; story?: string; width: number; height: number };
 export type SeriesData = SeriesMeta & { pieces: Piece[] };
@@ -55,15 +57,20 @@ export default function Collection({ series }: { series: SeriesData[] }) {
     const [selected, setSelected] = useState<Selection | null>(null);
     // false during SSR and hydration, true after; gates the body portal.
     const mounted = useSyncExternalStore(noop, () => true, () => false);
+    const reduce = useReducedMotion();
+    const tilt = useDeviceTilt(!reduce);
+    const ref = useRef<HTMLDivElement>(null);
+    const inView = useInView(ref, { amount: 0.1 });
 
     return (
-        <div className="pb-24">
+        <div ref={ref} className="pb-24">
             {series.map((meta, n) =>
                 meta.pieces.length ? (
                     <SeriesSection
                         key={meta.id}
                         meta={meta}
                         n={n}
+                        tiltActive={tilt === 'active'}
                         onOpen={(i) => setSelected({ series: n, piece: i })}
                     />
                 ) : null,
@@ -85,13 +92,43 @@ export default function Collection({ series }: { series: SeriesData[] }) {
                     </AnimatePresence>,
                     document.body,
                 )}
+
+            {/* iOS only allows gyroscope access after a tap. */}
+            {mounted &&
+                createPortal(
+                    <AnimatePresence>
+                        {tilt === 'needs-permission' && inView && !selected && (
+                            <motion.button
+                                type="button"
+                                onClick={enableTilt}
+                                className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 px-4 py-2.5 rounded-full border border-white/15 bg-[#141312]/90 backdrop-blur-md text-[#e6e1d6] font-mono text-xs tracking-[0.2em] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.9)]"
+                                initial={{ y: 80, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: 80, opacity: 0 }}
+                            >
+                                ✦ TILT TO PLAY
+                            </motion.button>
+                        )}
+                    </AnimatePresence>,
+                    document.body,
+                )}
         </div>
     );
 }
 
 // One series: a drifting colour field in its accent/glow sets the mood,
 // fading out at the edges so consecutive series blend as you scroll.
-function SeriesSection({ meta, n, onOpen }: { meta: SeriesData; n: number; onOpen: (i: number) => void }) {
+function SeriesSection({
+    meta,
+    n,
+    tiltActive,
+    onOpen,
+}: {
+    meta: SeriesData;
+    n: number;
+    tiltActive: boolean;
+    onOpen: (i: number) => void;
+}) {
     const reduce = useReducedMotion();
     const drift = (dx: number, dy: number, duration: number) =>
         reduce ? {} : { animate: { x: [0, dx, 0], y: [0, dy, 0] }, transition: { duration, repeat: Infinity, ease: 'easeInOut' as const } };
@@ -138,6 +175,7 @@ function SeriesSection({ meta, n, onOpen }: { meta: SeriesData; n: number; onOpe
                             index={i}
                             series={meta}
                             layout={LAYOUT[i % LAYOUT.length]}
+                            tiltActive={tiltActive}
                             onOpen={() => onOpen(i)}
                         />
                     ))}
@@ -149,19 +187,22 @@ function SeriesSection({ meta, n, onOpen }: { meta: SeriesData; n: number; onOpe
 
 // A trading card. At rest it sits slightly askew; on mouse hover it
 // straightens, lifts, and tilts in 3D toward the cursor with a holographic
-// sheen and glare. Hover also previews the title and story; click (or tap,
-// or Enter) opens the detail view.
+// sheen and glare. On phones, tilting the device drives the same 3D tilt and
+// sheen. Hover also previews the title and story; click (or tap, or Enter)
+// opens the detail view.
 function PieceCard({
     piece,
     index,
     series,
     layout,
+    tiltActive,
     onOpen,
 }: {
     piece: Piece;
     index: number;
     series: SeriesMeta;
     layout: (typeof LAYOUT)[number];
+    tiltActive: boolean;
     onOpen: () => void;
 }) {
     const reduce = useReducedMotion();
@@ -185,6 +226,20 @@ function PieceCard({
     // Each card drifts at its own rate while scrolling.
     const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
     const y = useTransform(scrollYProgress, [0, 1], [70 * layout.drift, -70 * layout.drift]);
+
+    // Phone tilt stands in for the cursor.
+    useEffect(() => {
+        if (!tiltActive || reduce) return;
+        mx.set(tiltX.get());
+        my.set(tiltY.get());
+        const offX = tiltX.on('change', (v) => mx.set(v));
+        const offY = tiltY.on('change', (v) => my.set(v));
+        return () => {
+            offX();
+            offY();
+        };
+    }, [tiltActive, reduce, mx, my]);
+    const sheen = hover ? 1 : tiltActive && !reduce ? 0.7 : 0;
 
     const onMove = (e: React.PointerEvent) => {
         if (e.pointerType !== 'mouse' || reduce) return;
@@ -266,7 +321,7 @@ function PieceCard({
                                     aria-hidden
                                     className="pointer-events-none absolute inset-0 transition-opacity duration-300"
                                     style={{
-                                        opacity: hover ? 0.5 : 0,
+                                        opacity: sheen * 0.5,
                                         mixBlendMode: 'color-dodge',
                                         backgroundImage:
                                             'linear-gradient(115deg, transparent 20%, rgba(255,0,170,0.55) 32%, rgba(0,230,255,0.55) 42%, rgba(255,240,0,0.5) 52%, rgba(0,255,140,0.5) 62%, transparent 75%)',
@@ -278,7 +333,7 @@ function PieceCard({
                                 <motion.span
                                     aria-hidden
                                     className="pointer-events-none absolute inset-0 transition-opacity duration-300"
-                                    style={{ opacity: hover ? 1 : 0, mixBlendMode: 'soft-light', backgroundImage: glare }}
+                                    style={{ opacity: sheen, mixBlendMode: 'soft-light', backgroundImage: glare }}
                                 />
 
                                 <AnimatePresence>
