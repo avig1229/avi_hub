@@ -1,7 +1,7 @@
 import { groq } from 'next-sanity';
 
 // Get all projects for the grid
-export const PROJECTS_QUERY = groq`*[_type == "project"] | order(title == "shRma" desc, title == "Archive" asc, date desc) {
+export const PROJECTS_QUERY = groq`*[_type == "project"] | order(title != "shRma", title == "Archive", date desc) {
   _id,
   title,
   "slug": slug.current,

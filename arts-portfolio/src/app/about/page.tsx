@@ -60,7 +60,7 @@ export default function AboutPage() {
                     <div className="border-t border-gray-200 dark:border-gray-800 pt-12">
                         <h2 className="text-sm font-mono uppercase tracking-widest mb-8">Connect</h2>
                         <div className="flex flex-wrap gap-8 font-mono text-lg">
-                            <a href="mailto:hello@example.com" className="hover:text-orange-500 transition-colors">hello@example.com</a>
+                            <a href="mailto:hello@example.com" className="hover:text-orange-500 transition-colors">avig1.22.9@gmail.com</a>
                             <a href="#" className="hover:text-blue-500 transition-colors">Instagram</a>
                             <a href="#" className="hover:text-pink-500 transition-colors">LinkedIn</a>
                         </div>

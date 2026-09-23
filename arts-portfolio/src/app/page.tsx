@@ -1,12 +1,12 @@
 import Hero from "@/components/Hero";
 import ProjectGrid from "@/components/ProjectGrid";
-import SashikoLogo from "@/components/SashikoLogo";
+import HorizontalScrollSection from "@/components/HorizontalScrollSection";
 
 export default function Home() {
   return (
     <div className="min-h-screen">
       <Hero />
-      <SashikoLogo />
+      <HorizontalScrollSection />
       <ProjectGrid />
     </div>
   );
