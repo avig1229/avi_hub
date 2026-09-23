@@ -126,6 +126,14 @@ export default defineType({
                             type: 'blockContent',
                         },
                         {
+                            name: 'accent',
+                            title: 'Accent color',
+                            type: 'string',
+                            description: 'CORE only: hex color that sets this series\u2019 mood gradient and card frame, e.g. #ff8ad8. Leave empty for the default.',
+                            validation: (rule) => rule.regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i, { name: 'hex color' }),
+                            hidden: ({ document }) => (document?.slug as { current?: string } | undefined)?.current !== 'core-collection',
+                        },
+                        {
                             name: 'gallery',
                             title: 'Section Gallery',
                             type: 'array',

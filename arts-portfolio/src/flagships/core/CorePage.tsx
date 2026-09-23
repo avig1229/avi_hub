@@ -1,7 +1,8 @@
 import { groq } from 'next-sanity';
 import { client } from '@/sanity/lib/client';
-import { BUILTIN_SERIES, DEFAULT_SERIES, FALLBACK_ACCENTS } from './content';
-import CoreExperience, { type Piece, type SeriesData } from './CoreExperience';
+import { BUILTIN_SERIES, DEFAULT_SERIES, FALLBACK_COLORS, shiftHue } from './content';
+import CoreExperience from './CoreExperience';
+import type { Piece, SeriesData } from './Collection';
 
 const PIECE = `{
   "url": asset->url,
@@ -19,6 +20,7 @@ const CORE_QUERY = groq`*[_type == "project" && slug.current == "core-collection
   subsections[]{
     title,
     description,
+    accent,
     "pieces": gallery[_type == "image" && defined(asset)]${PIECE}
   }
 }`;
@@ -31,7 +33,7 @@ type CoreData = {
     date?: string;
     content?: Block[];
     pieces?: CorePiece[];
-    subsections?: { title?: string; description?: Block[]; pieces?: CorePiece[] }[];
+    subsections?: { title?: string; description?: Block[]; accent?: string; pieces?: CorePiece[] }[];
 } | null;
 
 const plainText = (blocks?: Block[]) =>
@@ -42,6 +44,16 @@ const plainText = (blocks?: Block[]) =>
 
 const slugify = (s: string) =>
     s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'series';
+
+const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+// A colour set in the Studio wins; then the built-in pair; then a fallback.
+function colorsFor(custom: string | undefined, builtin: { accent: string; glow: string } | undefined, i: number) {
+    const c = custom?.trim();
+    if (c && HEX.test(c)) return { accent: c, glow: shiftHue(c) };
+    const { accent, glow } = builtin ?? FALLBACK_COLORS[i % FALLBACK_COLORS.length];
+    return { accent, glow };
+}
 
 export default async function CorePage() {
     const data: CoreData = await client.fetch(CORE_QUERY);
@@ -56,7 +68,7 @@ export default async function CorePage() {
                 id,
                 title: s.title!.trim(),
                 blurb: plainText(s.description).join(' ') || builtin?.blurb,
-                accent: builtin?.accent ?? FALLBACK_ACCENTS[i % FALLBACK_ACCENTS.length],
+                ...colorsFor(s.accent, builtin, i),
                 pieces: s.pieces ?? [],
             };
         });
@@ -71,7 +83,7 @@ export default async function CorePage() {
         let section = sections.find((s) => s.id === target);
         if (!section) {
             const b = BUILTIN_SERIES.find((s) => s.id === target)!;
-            section = { id: b.id, title: b.title, blurb: b.blurb, accent: b.accent, pieces: [] };
+            section = { id: b.id, title: b.title, blurb: b.blurb, accent: b.accent, glow: b.glow, pieces: [] };
             sections.push(section);
         }
         section.pieces.push(piece);
