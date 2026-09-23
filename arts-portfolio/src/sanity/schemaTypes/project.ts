@@ -90,14 +90,6 @@ export default defineType({
                             rows: 4,
                             description: 'A short backstory for this piece. Shown when hovering the piece on flagship pages.',
                         },
-                        {
-                            name: 'series',
-                            type: 'reference',
-                            title: 'Series',
-                            description: 'Which CORE series this piece belongs to. Pick one, or create a new series here. Left empty, it goes to Experimentals.',
-                            to: [{ type: 'coreSeries' }],
-                            hidden: ({ document }) => (document?.slug as { current?: string } | undefined)?.current !== 'core-collection',
-                        },
                     ],
                 },
                 {
@@ -116,6 +108,7 @@ export default defineType({
         defineField({
             name: 'subsections',
             title: 'Subsections (Seasons/Chapters)',
+            description: 'On CORE, each subsection is a series: its title and description head the section, and its gallery holds the pieces.',
             type: 'array',
             of: [
                 {

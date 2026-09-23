@@ -64,11 +64,12 @@ export const ANATOMY: AnatomyPart[] = [
     },
 ];
 
-// Series come from "CORE Series" documents in Sanity. These built-ins supply
-// defaults (blurb, accent, order) for the original three when a Sanity doc
-// with the same slug omits them, and legacyFiles places the original uploads
-// that predate the Series field. Untagged pieces land in Experimentals.
-export type SeriesMeta = { id: string; title: string; blurb?: string; accent: string; order: number };
+// Series come from the CORE project's Subsections in Sanity, in their order.
+// These built-ins supply the accent (and a blurb when the subsection has no
+// description) for subsections titled Sashiko / Graffiti / Experimentals.
+// Pieces still in the main gallery are placed by legacyFiles, or land in
+// Experimentals.
+export type SeriesMeta = { id: string; title: string; blurb?: string; accent: string };
 
 export const BUILTIN_SERIES: (SeriesMeta & { legacyFiles: string[] })[] = [
     {
@@ -76,7 +77,6 @@ export const BUILTIN_SERIES: (SeriesMeta & { legacyFiles: string[] })[] = [
         title: 'Sashiko',
         blurb: 'Stitched, patched, mended.',
         accent: '#6b7cff',
-        order: 1,
         legacyFiles: ['CORE005.png', 'CORE006.png', 'CORE008.png'],
     },
     {
@@ -84,7 +84,6 @@ export const BUILTIN_SERIES: (SeriesMeta & { legacyFiles: string[] })[] = [
         title: 'Graffiti',
         blurb: 'Loud strokes, one gesture each.',
         accent: '#ff2d3d',
-        order: 2,
         legacyFiles: ['CORE003.png', 'CORE004.png', 'CORE007.png'],
     },
     {
@@ -92,14 +91,13 @@ export const BUILTIN_SERIES: (SeriesMeta & { legacyFiles: string[] })[] = [
         title: 'Experimentals',
         blurb: 'Everything else the spine wanted to try.',
         accent: '#ff8ad8',
-        order: 3,
         legacyFiles: ['CORE001.png', 'CORE002.png'],
     },
 ];
 
 export const DEFAULT_SERIES = 'experimentals';
 
-// Accents for new series that don't set one.
+// Accents for series that aren't built-ins.
 export const FALLBACK_ACCENTS = ['#f2c14e', '#5fd3a8', '#9b8cff', '#ff9f5a'];
 
 export const pct = (p: Point) => ({

@@ -1,79 +1,87 @@
 import { groq } from 'next-sanity';
 import { client } from '@/sanity/lib/client';
-import { BUILTIN_SERIES, DEFAULT_SERIES, FALLBACK_ACCENTS, type SeriesMeta } from './content';
+import { BUILTIN_SERIES, DEFAULT_SERIES, FALLBACK_ACCENTS } from './content';
 import CoreExperience, { type Piece, type SeriesData } from './CoreExperience';
 
-const CORE_QUERY = groq`{
-  "project": *[_type == "project" && slug.current == "core-collection"][0] {
-    date,
-    content,
-    "pieces": gallery[_type == "image" && defined(asset)]{
-      "url": asset->url,
-      "file": asset->originalFilename,
-      caption,
-      story,
-      "series": series->slug.current,
-      "width": asset->metadata.dimensions.width,
-      "height": asset->metadata.dimensions.height
-    }
-  },
-  "series": *[_type == "coreSeries" && defined(slug.current)] | order(order asc, title asc) {
-    "id": slug.current,
+const PIECE = `{
+  "url": asset->url,
+  "file": asset->originalFilename,
+  caption,
+  story,
+  "width": asset->metadata.dimensions.width,
+  "height": asset->metadata.dimensions.height
+}`;
+
+const CORE_QUERY = groq`*[_type == "project" && slug.current == "core-collection"][0] {
+  date,
+  content,
+  "pieces": gallery[_type == "image" && defined(asset)]${PIECE},
+  subsections[]{
     title,
-    blurb,
-    accent,
-    order
+    description,
+    "pieces": gallery[_type == "image" && defined(asset)]${PIECE}
   }
 }`;
 
 type Block = { _type: string; children?: { text?: string }[] };
 
-type CorePiece = Piece & { file?: string; series?: string };
+type CorePiece = Piece & { file?: string };
 
 type CoreData = {
-    project: { date?: string; content?: Block[]; pieces?: CorePiece[] } | null;
-    series: (Partial<SeriesMeta> & { id: string; title?: string })[];
-};
+    date?: string;
+    content?: Block[];
+    pieces?: CorePiece[];
+    subsections?: { title?: string; description?: Block[]; pieces?: CorePiece[] }[];
+} | null;
 
-// Sanity series override the built-ins field by field; new ones follow them.
-function mergeSeries(fromSanity: CoreData['series']): SeriesMeta[] {
-    const merged = new Map<string, SeriesMeta>(BUILTIN_SERIES.map((b) => [b.id, { ...b }]));
-    fromSanity.forEach((s, i) => {
-        const base = merged.get(s.id);
-        merged.set(s.id, {
-            id: s.id,
-            title: s.title || base?.title || s.id,
-            blurb: s.blurb ?? base?.blurb,
-            accent: s.accent || base?.accent || FALLBACK_ACCENTS[i % FALLBACK_ACCENTS.length],
-            order: s.order ?? base?.order ?? 100 + i,
-        });
-    });
-    return [...merged.values()].sort((a, b) => a.order - b.order);
-}
-
-function seriesOf(piece: CorePiece, known: Set<string>): string {
-    if (piece.series && known.has(piece.series)) return piece.series;
-    const legacy = BUILTIN_SERIES.find((s) => s.legacyFiles.includes(piece.file ?? ''));
-    return legacy?.id ?? DEFAULT_SERIES;
-}
-
-export default async function CorePage() {
-    const data: CoreData = await client.fetch(CORE_QUERY);
-    const project = data.project;
-
-    const story = (project?.content ?? [])
+const plainText = (blocks?: Block[]) =>
+    (blocks ?? [])
         .filter((b) => b._type === 'block')
         .map((b) => (b.children ?? []).map((c) => c.text ?? '').join('').trim())
         .filter(Boolean);
 
-    const metas = mergeSeries(data.series ?? []);
-    const known = new Set(metas.map((m) => m.id));
+const slugify = (s: string) =>
+    s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'series';
 
-    // Pieces keep their gallery order within each series.
-    const series: SeriesData[] = metas.map((meta) => ({
-        ...meta,
-        pieces: (project?.pieces ?? []).filter((p) => seriesOf(p, known) === meta.id),
-    }));
+export default async function CorePage() {
+    const data: CoreData = await client.fetch(CORE_QUERY);
 
-    return <CoreExperience year={project?.date} story={story} series={series} />;
+    // Each titled subsection is a series, in Studio order.
+    const sections: SeriesData[] = (data?.subsections ?? [])
+        .filter((s) => s.title?.trim())
+        .map((s, i) => {
+            const id = slugify(s.title!);
+            const builtin = BUILTIN_SERIES.find((b) => b.id === id);
+            return {
+                id,
+                title: s.title!.trim(),
+                blurb: plainText(s.description).join(' ') || builtin?.blurb,
+                accent: builtin?.accent ?? FALLBACK_ACCENTS[i % FALLBACK_ACCENTS.length],
+                pieces: s.pieces ?? [],
+            };
+        });
+
+    // Main-gallery pieces not yet moved into a subsection keep their old
+    // placement. A piece in both shows once, in its subsection.
+    const placed = new Set(sections.flatMap((s) => s.pieces.map((p) => p.url)));
+    for (const piece of data?.pieces ?? []) {
+        if (placed.has(piece.url)) continue;
+        const target =
+            BUILTIN_SERIES.find((b) => b.legacyFiles.includes(piece.file ?? ''))?.id ?? DEFAULT_SERIES;
+        let section = sections.find((s) => s.id === target);
+        if (!section) {
+            const b = BUILTIN_SERIES.find((s) => s.id === target)!;
+            section = { id: b.id, title: b.title, blurb: b.blurb, accent: b.accent, pieces: [] };
+            sections.push(section);
+        }
+        section.pieces.push(piece);
+    }
+
+    // With no subsections yet, keep the built-in order.
+    if (!data?.subsections?.length) {
+        const rank = (id: string) => BUILTIN_SERIES.findIndex((b) => b.id === id);
+        sections.sort((a, b) => rank(a.id) - rank(b.id));
+    }
+
+    return <CoreExperience year={data?.date} story={plainText(data?.content)} series={sections} />;
 }
