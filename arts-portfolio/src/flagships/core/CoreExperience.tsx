@@ -1,10 +1,13 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import Image from 'next/image';
 import {
     AnimatePresence,
     motion,
+    useInView,
     useMotionTemplate,
     useReducedMotion,
     useScroll,
@@ -249,13 +252,24 @@ function Highlight({ part }: { part: AnatomyPart['id'] }) {
     ));
 }
 
+const noop = () => () => {};
+
 function Anatomy() {
     const [active, setActive] = useState<AnatomyPart['id'] | null>(null);
     const current = ANATOMY.find((a) => a.id === active);
+    const sectionRef = useRef<HTMLElement>(null);
+    const inView = useInView(sectionRef, { amount: 0.3 });
+    const mounted = useSyncExternalStore(noop, () => true, () => false);
+
+    // Tapping the active part again clears it.
+    const select = (id: AnatomyPart['id']) => setActive(active === id ? null : id);
 
     return (
-        <section className="min-h-screen max-w-[1400px] mx-auto px-6 md:px-12 py-24 grid sm:grid-cols-[auto_1fr] gap-12 sm:gap-8 md:gap-12 lg:gap-20 items-center">
-            <div className="relative w-[min(100%,48.65vh)] sm:w-[min(40vw,59.77vh)] aspect-[139/200] mx-auto">
+        <section
+            ref={sectionRef}
+            className="min-h-screen max-w-[1400px] mx-auto px-6 md:px-12 pt-24 pb-36 sm:py-24 grid sm:grid-cols-[auto_1fr] gap-8 sm:gap-8 md:gap-12 lg:gap-20 items-center"
+        >
+            <div className="relative w-[min(100%,41.7vh)] sm:w-[min(40vw,59.77vh)] aspect-[139/200] mx-auto">
                 <SpineImage />
                 <AnimatePresence mode="wait">
                     {active && (
@@ -274,7 +288,7 @@ function Anatomy() {
                 {ANATOMY.map((a) => (
                     <button
                         key={a.id}
-                        onClick={() => setActive(active === a.id ? null : a.id)}
+                        onClick={() => select(a.id)}
                         aria-label={a.label}
                         aria-pressed={active === a.id}
                         className="group absolute -translate-x-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center"
@@ -293,35 +307,26 @@ function Anatomy() {
                 ))}
             </div>
 
-            <div className="max-w-xl">
+            {/* Heading sits above the spine on phones, beside it from sm. */}
+            <div className="max-w-xl order-first sm:order-none">
                 <span className="font-mono text-xs tracking-[0.3em] text-[#e6e1d6]/50">ANATOMY</span>
-                <h2 className="mt-4 text-4xl sm:text-3xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-none">
+                <h2 className="mt-3 sm:mt-4 text-3xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-none">
                     One frame.
                     <br />
                     Every personality.
                 </h2>
-                <p className="mt-6 sm:mt-4 md:mt-6 text-[#e6e1d6]/60 sm:text-sm md:text-base">
+                <p className="mt-3 sm:mt-4 md:mt-6 text-sm md:text-base text-[#e6e1d6]/60">
                     Every piece in the collection shares this bare spine. Tap a part to see what it carries.
                 </p>
 
-                <div className="mt-10 sm:mt-6 md:mt-10 flex flex-wrap gap-2">
+                <div className="flex mt-5 sm:mt-6 md:mt-10 flex-wrap gap-2">
                     {ANATOMY.map((a) => (
-                        <button
-                            key={a.id}
-                            onClick={() => setActive(active === a.id ? null : a.id)}
-                            aria-pressed={active === a.id}
-                            className={`px-4 sm:px-3 md:px-4 py-2 rounded-full border text-sm transition-colors ${
-                                active === a.id
-                                    ? 'bg-[#f2dcc0] text-black border-[#f2dcc0]'
-                                    : 'border-[#e6e1d6]/30 hover:border-[#e6e1d6]'
-                            }`}
-                        >
-                            {a.label}
-                        </button>
+                        <PartButton key={a.id} part={a} active={active === a.id} onClick={() => select(a.id)} />
                     ))}
                 </div>
 
-                <div className="mt-8 sm:mt-6 md:mt-8 min-h-[12rem]">
+                {/* From sm up the story shows inline; phones get the pop-up. */}
+                <div className="hidden sm:block mt-6 md:mt-8 min-h-[12rem]">
                     <AnimatePresence mode="wait">
                         {current && (
                             <motion.div
@@ -331,13 +336,79 @@ function Anatomy() {
                                 exit={{ opacity: 0, y: -12 }}
                                 transition={{ duration: 0.25 }}
                             >
-                                <h3 className="text-2xl sm:text-xl md:text-2xl lg:text-3xl font-semibold tracking-tight">{current.title}</h3>
-                                <p className="mt-4 text-lg sm:text-base lg:text-lg leading-relaxed text-[#e6e1d6]/80">{current.body}</p>
+                                <h3 className="text-xl md:text-2xl lg:text-3xl font-semibold tracking-tight">{current.title}</h3>
+                                <p className="mt-4 text-base lg:text-lg leading-relaxed text-[#e6e1d6]/80">{current.body}</p>
                             </motion.div>
                         )}
                     </AnimatePresence>
                 </div>
             </div>
+
+            {/* Portaled: the page wrapper's transform breaks position: fixed. */}
+            {mounted &&
+                createPortal(
+                    <AnimatePresence>
+                        {inView && current && (
+                            <AnatomySheet key={current.id} part={current} onClose={() => setActive(null)} />
+                        )}
+                    </AnimatePresence>,
+                    document.body,
+                )}
         </section>
+    );
+}
+
+function PartButton({
+    part,
+    active,
+    onClick,
+}: {
+    part: AnatomyPart;
+    active: boolean;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            onClick={onClick}
+            aria-pressed={active}
+            className={`shrink-0 rounded-full border px-3 md:px-4 py-2 text-sm transition-colors ${
+                active ? 'bg-[#f2dcc0] text-black border-[#f2dcc0]' : 'border-[#e6e1d6]/30 hover:border-[#e6e1d6]'
+            }`}
+        >
+            {part.label}
+        </button>
+    );
+}
+
+// Phones only: a pop-up pinned to the bottom of the screen with the selected
+// part's story, so it reads alongside the spine. Closing clears the part.
+function AnatomySheet({ part, onClose }: { part: AnatomyPart; onClose: () => void }) {
+    return (
+        <motion.div
+            role="dialog"
+            aria-label={part.title}
+            className="sm:hidden fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-white/10 bg-[#141312]/90 backdrop-blur-md text-[#e6e1d6] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.9)]"
+            initial={{ y: 120, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 120, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+        >
+            <div className="flex items-start gap-3 p-4 pr-3">
+                <div className="min-w-0 flex-1 max-h-[45vh] overflow-y-auto">
+                    <span className="font-mono text-[10px] tracking-[0.3em] text-[#e6e1d6]/50">
+                        {part.label.toUpperCase()}
+                    </span>
+                    <h3 className="mt-1 text-lg font-semibold tracking-tight">{part.title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-[#e6e1d6]/80">{part.body}</p>
+                </div>
+                <button
+                    onClick={onClose}
+                    aria-label="Close"
+                    className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center border border-[#e6e1d6]/20"
+                >
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+        </motion.div>
     );
 }
