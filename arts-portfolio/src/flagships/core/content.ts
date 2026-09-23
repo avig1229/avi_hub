@@ -95,6 +95,14 @@ export const SERIES = [
 
 export type SeriesId = (typeof SERIES)[number]['id'];
 
+// Pieces not in Sanity yet, appended to the end of their series. Remove an
+// entry once that piece is uploaded to Sanity, or it will show twice.
+export const LOCAL_PIECES: Record<SeriesId, { url: string; width: number; height: number; caption?: string }[]> = {
+    sashiko: [],
+    graffiti: [],
+    experimentals: [{ url: '/work/core/experimentals-anne.png', width: 1640, height: 2360 }],
+};
+
 export const pct = (p: Point) => ({
     left: `${(p.x / SPINE.width) * 100}%`,
     top: `${(p.y / SPINE.height) * 100}%`,

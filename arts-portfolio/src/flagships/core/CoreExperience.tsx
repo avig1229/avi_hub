@@ -389,7 +389,7 @@ function Collection({ series }: { series: SeriesData[] }) {
                                     transition={{ duration: 0.6, delay: i * 0.08 }}
                                 >
                                     <Image
-                                        loader={sanityLoader}
+                                        loader={piece.url.startsWith('https://cdn.sanity.io/') ? sanityLoader : undefined}
                                         src={piece.url}
                                         alt={piece.caption || `${meta.title} piece ${i + 1}`}
                                         width={piece.width}
