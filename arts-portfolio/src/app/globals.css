@@ -74,3 +74,22 @@ h5,
 h6 {
   font-family: var(--font-sans), sans-serif;
 }
+/* Soundtrack toggle equalizer bars */
+@theme {
+  --animate-sound-bar: sound-bar 0.9s ease-in-out infinite;
+}
+
+@keyframes sound-bar {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+/* Flagship pages that paint their own black canvas (e.g. CORE) */
+body:has([data-dark-canvas]) {
+  background: #000;
+  color: #e6e1d6;
+}
+
+body:has([data-dark-canvas]) nav {
+  color: #fff;
+}

@@ -6,6 +6,7 @@ import { urlFor } from '@/sanity/lib/image';
 import Image from 'next/image';
 import ProjectTabs from '@/components/ProjectTabs';
 import GalleryGrid from '@/components/GalleryGrid';
+import { flagships } from '@/flagships';
 
 export default async function ProjectPage({
     params,
@@ -13,6 +14,10 @@ export default async function ProjectPage({
     params: Promise<{ slug: string }>;
 }) {
     const { slug } = await params;
+
+    const Flagship = flagships[slug];
+    if (Flagship) return <Flagship />;
+
     const project = await client.fetch(PROJECT_QUERY, { slug });
 
     if (!project) {

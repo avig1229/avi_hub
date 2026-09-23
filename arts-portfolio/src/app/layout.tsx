@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 import { ThemeProvider } from "@/components/ThemeProvider";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { AudioProvider } from "@/components/audio/AudioProvider";
 
 export default function RootLayout({
   children,
@@ -30,7 +31,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${inter.variable} ${robotoMono.variable} antialiased`}
+        className={`${inter.variable} ${robotoMono.variable} antialiased overflow-x-clip`}
       >
         <ThemeProvider
           attribute="class"
@@ -38,11 +39,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navigation />
-          <main className="min-h-screen pt-24 px-6 md:px-12 max-w-[1920px] mx-auto">
-            {children}
-          </main>
-          <Footer />
+          <AudioProvider>
+            <Navigation />
+            <main className="min-h-screen pt-24 px-6 md:px-12 max-w-[1920px] mx-auto">
+              {children}
+            </main>
+            <Footer />
+          </AudioProvider>
         </ThemeProvider>
       </body>
     </html>

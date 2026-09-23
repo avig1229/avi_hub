@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ThemeToggle } from './ThemeToggle';
+import { SoundToggle } from './audio/SoundToggle';
 
 export default function Navigation() {
     return (
@@ -15,6 +16,7 @@ export default function Navigation() {
                     <Link href="/about" className="hover:underline underline-offset-4 decoration-1">
                         ABOUT
                     </Link>
+                    <SoundToggle />
                     <ThemeToggle />
                 </div>
             </div>
