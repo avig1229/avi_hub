@@ -25,7 +25,7 @@ import {
     type SeriesId,
 } from './content';
 
-export type Piece = { url: string; caption?: string; width: number; height: number };
+export type Piece = { url: string; caption?: string; story?: string; width: number; height: number };
 
 // Let Sanity's CDN resize instead of the Next optimizer, which times out
 // pulling some of the heavier original PNGs.
@@ -381,31 +381,103 @@ function Collection({ series }: { series: SeriesData[] }) {
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
                             {pieces.map((piece, i) => (
-                                <motion.figure
-                                    key={piece.url}
-                                    initial={{ opacity: 0, y: 40 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true, margin: '-10%' }}
-                                    transition={{ duration: 0.6, delay: i * 0.08 }}
-                                >
-                                    <Image
-                                        loader={piece.url.startsWith('https://cdn.sanity.io/') ? sanityLoader : undefined}
-                                        src={piece.url}
-                                        alt={piece.caption || `${meta.title} piece ${i + 1}`}
-                                        width={piece.width}
-                                        height={piece.height}
-                                        sizes="(min-width: 768px) 30vw, 50vw"
-                                        className="w-full h-auto"
-                                    />
-                                    {piece.caption && (
-                                        <figcaption className="mt-3 text-sm text-[#e6e1d6]/60">{piece.caption}</figcaption>
-                                    )}
-                                </motion.figure>
+                                <PieceCard key={piece.url} piece={piece} index={i} series={meta} />
                             ))}
                         </div>
                     </section>
                 );
             })}
         </div>
+    );
+}
+
+// A piece with an optional backstory that slides up on hover (or tap on touch).
+function PieceCard({
+    piece,
+    index,
+    series,
+}: {
+    piece: Piece;
+    index: number;
+    series: (typeof SERIES)[number];
+}) {
+    const [open, setOpen] = useState(false);
+    const story = piece.story?.trim();
+
+    return (
+        <motion.figure
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-10%' }}
+            transition={{ duration: 0.6, delay: index * 0.08 }}
+        >
+            <div
+                className={`relative overflow-hidden ${story ? 'cursor-pointer' : ''}`}
+                // Mouse: hover opens. Touch/pen: tap toggles (a mouse click
+                // must not toggle, or it would close what hover just opened).
+                onPointerEnter={story ? (e) => e.pointerType === 'mouse' && setOpen(true) : undefined}
+                onPointerLeave={story ? (e) => e.pointerType === 'mouse' && setOpen(false) : undefined}
+                onPointerUp={story ? (e) => e.pointerType !== 'mouse' && setOpen((o) => !o) : undefined}
+                onKeyDown={
+                    story
+                        ? (e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  setOpen((o) => !o);
+                              } else if (e.key === 'Escape') setOpen(false);
+                          }
+                        : undefined
+                }
+                onBlur={story ? () => setOpen(false) : undefined}
+                tabIndex={story ? 0 : undefined}
+                aria-expanded={story ? open : undefined}
+                aria-label={story ? `${piece.caption || `${series.title} piece ${index + 1}`}: show story` : undefined}
+            >
+                <motion.div animate={{ scale: open ? 1.04 : 1 }} transition={{ duration: 0.5, ease: 'easeOut' }}>
+                    <Image
+                        loader={piece.url.startsWith('https://cdn.sanity.io/') ? sanityLoader : undefined}
+                        src={piece.url}
+                        alt={piece.caption || `${series.title} piece ${index + 1}`}
+                        width={piece.width}
+                        height={piece.height}
+                        sizes="(min-width: 768px) 30vw, 50vw"
+                        className="w-full h-auto"
+                    />
+                </motion.div>
+
+                {story && (
+                    <>
+                        <span
+                            className={`absolute top-3 right-3 px-2 py-1 rounded-full font-mono text-[10px] tracking-[0.2em] bg-black/60 backdrop-blur-sm border transition-opacity ${
+                                open ? 'opacity-0' : 'opacity-100'
+                            }`}
+                            style={{ borderColor: series.accent, color: series.accent }}
+                        >
+                            STORY
+                        </span>
+                        <AnimatePresence>
+                            {open && (
+                                <motion.div
+                                    className="absolute inset-x-0 bottom-0 p-4 md:p-6 bg-gradient-to-t from-black via-black/85 to-transparent pt-16"
+                                    initial={{ opacity: 0, y: 24 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 24 }}
+                                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                                >
+                                    <span className="block h-px w-8 mb-3" style={{ background: series.accent }} />
+                                    {piece.caption && (
+                                        <h3 className="text-base md:text-lg font-semibold tracking-tight">{piece.caption}</h3>
+                                    )}
+                                    <p className="mt-1 text-sm md:text-base leading-relaxed text-[#e6e1d6]/85">{story}</p>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </>
+                )}
+            </div>
+            {piece.caption && (
+                <figcaption className="mt-3 text-sm text-[#e6e1d6]/60">{piece.caption}</figcaption>
+            )}
+        </motion.figure>
     );
 }

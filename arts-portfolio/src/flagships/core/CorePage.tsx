@@ -10,6 +10,7 @@ const CORE_QUERY = groq`*[_type == "project" && slug.current == "core-collection
   "pieces": gallery[_type == "image"]{
     "url": asset->url,
     caption,
+    story,
     "width": asset->metadata.dimensions.width,
     "height": asset->metadata.dimensions.height
   },
@@ -18,6 +19,8 @@ const CORE_QUERY = groq`*[_type == "project" && slug.current == "core-collection
     "pieces": gallery[_type == "image"]{
       "url": asset->url,
       caption,
+      story,
+    story,
       "width": asset->metadata.dimensions.width,
       "height": asset->metadata.dimensions.height
     }

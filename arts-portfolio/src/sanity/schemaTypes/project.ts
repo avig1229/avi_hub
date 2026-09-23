@@ -83,6 +83,13 @@ export default defineType({
                             type: 'string',
                             title: 'Caption',
                         },
+                        {
+                            name: 'story',
+                            type: 'text',
+                            title: 'Story',
+                            rows: 4,
+                            description: 'A short backstory for this piece. Shown when hovering the piece on flagship pages.',
+                        },
                     ],
                 },
                 {
@@ -130,6 +137,13 @@ export default defineType({
                                             name: 'caption',
                                             type: 'string',
                                             title: 'Caption',
+                                        },
+                                        {
+                                            name: 'story',
+                                            type: 'text',
+                                            title: 'Story',
+                                            rows: 4,
+                                            description: 'A short backstory for this piece. Shown when hovering the piece on flagship pages.',
                                         },
                                     ],
                                 },
