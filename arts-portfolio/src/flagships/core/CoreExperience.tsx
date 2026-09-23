@@ -271,8 +271,8 @@ function Anatomy() {
     const current = ANATOMY.find((a) => a.id === active);
 
     return (
-        <section className="min-h-screen max-w-[1400px] mx-auto px-6 md:px-12 py-24 grid lg:grid-cols-[auto_1fr] gap-12 lg:gap-20 items-center">
-            <div className="relative w-[min(100%,48.65vh)] lg:w-[59.77vh] aspect-[139/200] mx-auto">
+        <section className="min-h-screen max-w-[1400px] mx-auto px-6 md:px-12 py-24 grid sm:grid-cols-[auto_1fr] gap-12 sm:gap-8 md:gap-12 lg:gap-20 items-center">
+            <div className="relative w-[min(100%,48.65vh)] sm:w-[min(40vw,59.77vh)] aspect-[139/200] mx-auto">
                 <SpineImage />
                 <AnimatePresence mode="wait">
                     {active && (
@@ -312,22 +312,22 @@ function Anatomy() {
 
             <div className="max-w-xl">
                 <span className="font-mono text-xs tracking-[0.3em] text-[#e6e1d6]/50">ANATOMY</span>
-                <h2 className="mt-4 text-4xl md:text-6xl font-bold tracking-tighter leading-none">
+                <h2 className="mt-4 text-4xl sm:text-3xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-none">
                     One frame.
                     <br />
                     Every personality.
                 </h2>
-                <p className="mt-6 text-[#e6e1d6]/60">
+                <p className="mt-6 sm:mt-4 md:mt-6 text-[#e6e1d6]/60 sm:text-sm md:text-base">
                     Every piece in the collection shares this bare spine. Tap a part to see what it carries.
                 </p>
 
-                <div className="mt-10 flex flex-wrap gap-2">
+                <div className="mt-10 sm:mt-6 md:mt-10 flex flex-wrap gap-2">
                     {ANATOMY.map((a) => (
                         <button
                             key={a.id}
                             onClick={() => setActive(active === a.id ? null : a.id)}
                             aria-pressed={active === a.id}
-                            className={`px-4 py-2 rounded-full border text-sm transition-colors ${
+                            className={`px-4 sm:px-3 md:px-4 py-2 rounded-full border text-sm transition-colors ${
                                 active === a.id
                                     ? 'bg-[#f2dcc0] text-black border-[#f2dcc0]'
                                     : 'border-[#e6e1d6]/30 hover:border-[#e6e1d6]'
@@ -338,7 +338,7 @@ function Anatomy() {
                     ))}
                 </div>
 
-                <div className="mt-8 min-h-[12rem]">
+                <div className="mt-8 sm:mt-6 md:mt-8 min-h-[12rem]">
                     <AnimatePresence mode="wait">
                         {current && (
                             <motion.div
@@ -348,8 +348,8 @@ function Anatomy() {
                                 exit={{ opacity: 0, y: -12 }}
                                 transition={{ duration: 0.25 }}
                             >
-                                <h3 className="text-2xl md:text-3xl font-semibold tracking-tight">{current.title}</h3>
-                                <p className="mt-4 text-lg leading-relaxed text-[#e6e1d6]/80">{current.body}</p>
+                                <h3 className="text-2xl sm:text-xl md:text-2xl lg:text-3xl font-semibold tracking-tight">{current.title}</h3>
+                                <p className="mt-4 text-lg sm:text-base lg:text-lg leading-relaxed text-[#e6e1d6]/80">{current.body}</p>
                             </motion.div>
                         )}
                     </AnimatePresence>
