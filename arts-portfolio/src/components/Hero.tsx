@@ -1,7 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef, useState } from 'react';
-import Logo from './Logo';
+import FabricLogo from './FabricLogo';
 import {
     AnimatePresence,
     motion,
@@ -127,15 +127,9 @@ export default function Hero() {
                     style={{ opacity: logoOpacity, scale: logoScale }}
                     className="w-[86vw] max-w-[960px]"
                 >
-                    <h1 className="overflow-hidden">
-                        <motion.span
-                            initial={{ y: '100%' }}
-                            animate={{ y: 0 }}
-                            transition={{ duration: 0.8, ease: 'circOut' }}
-                            className="block"
-                        >
-                            <Logo className="w-full" />
-                        </motion.span>
+                    <h1>
+                        {/* Sashiko cloth blowing in on the wind, landing as the logo. */}
+                        <FabricLogo className="w-full" />
                     </h1>
                 </motion.div>
 
