@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion';
@@ -11,7 +11,9 @@ import { SITE_GUIDE_DEFAULTS, type SiteGuideLines } from './defaults';
 // Pages drop <GuideSpot> markers; the first time a visitor reaches one, he
 // says its line in a typewriter dialogue box. Each line plays once per
 // browser (editing the line in Sanity makes it play again). Tapping his head
-// replays the last line.
+// replays the last line. A spot marked `revealsGuide` keeps him off screen
+// while the page is scrolled above it (the home page does this while the
+// hero has the stage).
 
 const SEEN_KEY = 'shrma-guide-seen';
 const CHARS_PER_SECOND = 45;
@@ -20,6 +22,8 @@ type Message = { key: string; pages: string[] };
 
 type GuideContextValue = {
     say: (id: string, text: string) => void;
+    // Hold the dock off screen while `on` for this id.
+    hold: (id: string, on: boolean) => void;
     site: SiteGuideLines;
 };
 
@@ -66,6 +70,17 @@ export function GuideProvider({
 
     const [current, setCurrent] = useState<Message | null>(null);
     const [page, setPage] = useState(0);
+    const [holds, setHolds] = useState<ReadonlySet<string>>(new Set());
+
+    const hold = useCallback((id: string, on: boolean) => {
+        setHolds((prev) => {
+            if (prev.has(id) === on) return prev;
+            const next = new Set(prev);
+            if (on) next.add(id);
+            else next.delete(id);
+            return next;
+        });
+    }, []);
     const queue = useRef<Message[]>([]);
     const last = useRef<Message | null>(null);
     const open = useRef<Message | null>(null);
@@ -106,9 +121,10 @@ export function GuideProvider({
     const replay = () => show(last.current ?? { key: 'idle', pages: toPages(site.idle) });
 
     return (
-        <GuideContext.Provider value={{ say, site }}>
+        <GuideContext.Provider value={{ say, hold, site }}>
             {children}
             <GuideDock
+                hidden={holds.size > 0}
                 name={site.name}
                 message={current}
                 page={page}
@@ -133,14 +149,16 @@ export function GuideSpot({
     id,
     text,
     siteKey,
+    revealsGuide = false,
     className = '',
 }: {
     id: string;
     text?: string | null;
     siteKey?: Exclude<keyof SiteGuideLines, 'name'>;
+    revealsGuide?: boolean;
     className?: string;
 }) {
-    const { say, site } = useGuide();
+    const { say, hold, site } = useGuide();
     const ref = useRef<HTMLDivElement>(null);
     const inView = useInView(ref, { once: true, margin: '0px 0px -30% 0px' });
     const line = text?.trim() || (siteKey ? site[siteKey] : '');
@@ -149,10 +167,31 @@ export function GuideSpot({
         if (inView && line) say(id, line);
     }, [inView, line, id, say]);
 
+    // Keep the dock hidden while this spot is still below the reveal line, so
+    // scrolling back up above it tucks him away again. Released on leaving the page.
+    useEffect(() => {
+        if (!revealsGuide) return;
+        const update = () => {
+            const el = ref.current;
+            if (el) hold(id, el.getBoundingClientRect().top > window.innerHeight * 0.7);
+        };
+        update();
+        window.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+        return () => {
+            window.removeEventListener('scroll', update);
+            window.removeEventListener('resize', update);
+            hold(id, false);
+        };
+    }, [revealsGuide, id, hold]);
+
     return <div ref={ref} aria-hidden className={`h-px w-full pointer-events-none ${className}`} />;
 }
 
+const noop = () => () => {};
+
 function GuideDock({
+    hidden,
     name,
     message,
     page,
@@ -160,6 +199,7 @@ function GuideDock({
     onClose,
     onHead,
 }: {
+    hidden: boolean;
     name: string;
     message: Message | null;
     page: number;
@@ -190,13 +230,26 @@ function GuideDock({
         return () => cancelAnimationFrame(raf);
     }, [text, reduce]);
 
+    // Not shown until after hydration, so a page that holds him back never
+    // flashes him on load.
+    const mounted = useSyncExternalStore(noop, () => true, () => false);
+
     if (pathname?.startsWith('/studio')) return null;
+    const away = hidden || !mounted;
 
     const talking = !!message && !done;
     const advance = () => (done ? onAdvance() : setProgress({ text, n: text.length }));
 
     return (
-        <div className="guide-dock fixed right-3 bottom-3 md:right-6 md:bottom-6 z-[45] flex flex-col items-end gap-3 pointer-events-none">
+        <motion.div
+            className="guide-dock fixed right-3 bottom-3 md:right-6 md:bottom-6 z-[45] flex flex-col items-end gap-3 pointer-events-none"
+            initial={false}
+            animate={away ? { opacity: 0, y: 40 } : { opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+            // Only set while held: an inline value would override the overlay rule in globals.css.
+            style={away ? { visibility: 'hidden' } : undefined}
+            aria-hidden={away || undefined}
+        >
             <AnimatePresence>
                 {message && (
                     <motion.div
@@ -300,6 +353,6 @@ function GuideDock({
                     }
                 />
             </motion.button>
-        </div>
+        </motion.div>
     );
 }

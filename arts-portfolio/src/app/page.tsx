@@ -10,7 +10,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <Hero />
-      <GuideSpot id="home" siteKey="home" />
+      <GuideSpot id="home" siteKey="home" revealsGuide />
       <ProjectGrid />
     </div>
   );
