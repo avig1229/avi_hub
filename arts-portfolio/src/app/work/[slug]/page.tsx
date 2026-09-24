@@ -8,6 +8,7 @@ import ProjectTabs from '@/components/ProjectTabs';
 import GalleryGrid from '@/components/GalleryGrid';
 import { flagships } from '@/flagships';
 import { GuideSpot } from '@/components/guide/Guide';
+import { PROJECT_GUIDE_DEFAULTS } from '@/components/guide/defaults';
 
 export default async function ProjectPage({
     params,
@@ -30,6 +31,13 @@ export default async function ProjectPage({
         )
     }
 
+    // Third Eye's lines: Sanity's "Guide says" fields win, the built-in drafts fill the gaps.
+    const guideDefaults = PROJECT_GUIDE_DEFAULTS[slug] ?? {};
+    const introGuide = project.guide?.trim() || guideDefaults.intro;
+    const sectionGuides: (string | undefined)[] = (project.subsections ?? []).map(
+        (s: { title?: string; guide?: string }) => s.guide?.trim() || (s.title ? guideDefaults.sections?.[s.title] : undefined),
+    );
+
     return (
         <article className="min-h-screen py-12 animate-in fade-in duration-500 max-w-[1080px] mx-auto px-4">
             <Link href="/" className="inline-block mb-12 text-sm font-mono text-gray-500 hover:text-black dark:hover:text-white transition-colors">
@@ -44,7 +52,7 @@ export default async function ProjectPage({
 
             </header>
 
-            {project.guide && <GuideSpot id={`project:${slug}`} text={project.guide} />}
+            {introGuide && <GuideSpot id={`project:${slug}`} text={introGuide} group={`project:${slug}`} />}
 
             {project.mainImage && (
                 <div className="mb-12 max-w-[90%] mx-auto">
@@ -65,6 +73,8 @@ export default async function ProjectPage({
                         mainContent={project.content}
                         mainGallery={project.gallery}
                         subsections={project.subsections}
+                        slug={slug}
+                        sectionGuides={sectionGuides}
                     />
                 </div>
 

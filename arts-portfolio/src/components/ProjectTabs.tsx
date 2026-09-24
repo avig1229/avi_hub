@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PortableText } from '@portabletext/react';
 import GalleryGrid from './GalleryGrid';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGuide } from './guide/Guide';
 
 // Portable Text Components (copied from page.tsx for consistency)
 const ptComponents = {
@@ -35,9 +36,12 @@ interface UserProjectTabsProps {
     mainContent: any;
     mainGallery: any[];
     subsections?: any[];
+    slug: string;
+    // Third Eye's line for each subsection, in the same order.
+    sectionGuides?: (string | undefined)[];
 }
 
-export default function ProjectTabs({ mainContent, mainGallery, subsections = [] }: UserProjectTabsProps) {
+export default function ProjectTabs({ mainContent, mainGallery, subsections = [], slug, sectionGuides = [] }: UserProjectTabsProps) {
     const [activeTab, setActiveTab] = useState(0);
 
     // Combine main content and subsections into a unified structure for easier rendering
@@ -45,14 +49,24 @@ export default function ProjectTabs({ mainContent, mainGallery, subsections = []
         {
             title: 'Overview',
             content: mainContent,
-            gallery: mainGallery
+            gallery: mainGallery,
+            guide: undefined as string | undefined,
         },
-        ...(subsections || []).map(section => ({
+        ...(subsections || []).map((section, i) => ({
             title: section.title,
             content: section.description,
-            gallery: section.gallery
+            gallery: section.gallery,
+            guide: sectionGuides[i],
         }))
     ];
+
+    // Third Eye pipes up the first time each tab is opened, straight away rather
+    // than on scroll, since on phones the tab's content can start below the fold.
+    const { say } = useGuide();
+    const { title: activeTitle, guide: activeGuide } = tabs[activeTab];
+    useEffect(() => {
+        if (activeGuide) say(`project:${slug}:${activeTitle}`, activeGuide, { group: `project:${slug}` });
+    }, [activeGuide, activeTitle, slug, say]);
 
     return (
         <div className="space-y-8">

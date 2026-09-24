@@ -36,6 +36,7 @@ export const PROJECT_QUERY = groq`*[_type == "project" && slug.current == $slug]
   subsections[]{
     title,
     description,
+    guide,
     gallery[]{
       ...,
       _type == "image" => {
