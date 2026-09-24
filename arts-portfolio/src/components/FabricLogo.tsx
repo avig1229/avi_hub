@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import Logo, { LOGO_MASK } from './Logo';
 
 // Landing intro for the hero wordmark: the logo is cut from sashiko cloth
-// that blows in on the wind, flaps, and settles into place, where the cloth
+// that appears in place flapping in the wind, then settles, and the cloth
 // fades into the normal logo colour.
 //
 // The flapping is an SVG turbulence + displacement filter on a wrapper, driven
@@ -13,7 +13,7 @@ import Logo, { LOGO_MASK } from './Logo';
 // both clipped by the logo mask. The filter is removed once it lands.
 
 const FILTER_ID = 'shrma-fabric-wind';
-const DURATION = 2600; // ms, blow-in to landed
+const DURATION = 2600; // ms, appear to landed
 const WIND_UNTIL = 900; // full wind until here, then it dies down
 const CALM_AT = 2300;
 const MAX_DISPLACE = 90;
@@ -89,15 +89,15 @@ export default function FabricLogo({ className = '' }: { className?: string }) {
                 </filter>
             </svg>
 
-            {/* Blown in from the side: skewed and tilted, then it lands. */}
+            {/* Appears in place, flapping; a slight lean and swell relax as it lands. */}
             <motion.span
                 role="img"
                 aria-label="shRma"
                 className={`relative block aspect-[1164/400] ${className}`}
                 style={{ filter: `url(#${FILTER_ID})` }}
-                initial={{ x: '-70vw', y: '-12vh', rotate: -14, skewX: 22, scale: 1.3 }}
-                animate={{ x: 0, y: 0, rotate: 0, skewX: 0, scale: 1 }}
-                transition={{ duration: 1.5, ease: [0.16, 1.05, 0.3, 1] }}
+                initial={{ opacity: 0, scale: 1.06, skewX: 5 }}
+                animate={{ opacity: 1, scale: 1, skewX: 0 }}
+                transition={{ opacity: { duration: 0.5 }, default: { duration: 2, ease: [0.22, 1, 0.36, 1] } }}
             >
                 {/* Final colour underneath; the cloth fades off it. */}
                 <span className="absolute inset-0 bg-current" style={LOGO_MASK} />
