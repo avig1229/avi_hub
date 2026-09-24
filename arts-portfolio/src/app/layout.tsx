@@ -1,15 +1,24 @@
 import type { Metadata } from "next";
-import { Inter, Roboto_Mono } from "next/font/google";
+import { Mulish, Philosopher, Roboto_Mono } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
 
 const robotoMono = Roboto_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
+});
+
+// Headings.
+const philosopher = Philosopher({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-display",
+});
+
+// Body text and UI.
+const mulish = Mulish({
+  subsets: ["latin"],
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
@@ -31,7 +40,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${inter.variable} ${robotoMono.variable} antialiased overflow-x-clip`}
+        className={`${mulish.variable} ${philosopher.variable} ${robotoMono.variable} antialiased overflow-x-clip`}
       >
         <ThemeProvider
           attribute="class"
