@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { Press_Start_2P } from 'next/font/google';
+
+// Pixel face for the arcade-cabinet title; loaded only where this section is used.
+const arcade = Press_Start_2P({ weight: '400', subsets: ['latin'], display: 'swap' });
 
 export interface WorkItem {
     slug: string;
@@ -143,14 +147,32 @@ export default function WorkSelect({ items }: { items: WorkItem[] }) {
 
     return (
         <section id="work" className="py-12" onKeyDown={onSectionKey} aria-label="Selected work">
-            <div className="flex flex-wrap justify-between items-baseline gap-x-8 gap-y-2 mb-10 border-b border-black dark:border-white pb-4">
-                <h2 className="text-4xl font-bold tracking-tighter uppercase">Selected Work</h2>
-                <p className="font-mono text-xs uppercase tracking-widest text-gray-500">
-                    Pick a project, or let the <span aria-hidden>?</span>
-                    <span className="sr-only">random</span> box choose
+            {/* Arcade-cabinet title, like a fighting game's select screen. */}
+            <header className={`${arcade.className} text-center mb-10 md:mb-14`}>
+                <h2
+                    className={`${arcade.className} inline-block uppercase leading-[1.15] text-[clamp(1.35rem,5.2vw,3.75rem)] bg-clip-text text-transparent`}
+                    style={{
+                        backgroundImage: 'linear-gradient(180deg, #FFF3B0 0%, #FFD23F 38%, #FF8A1F 62%, #D7263D 100%)',
+                        WebkitTextStroke: '1px #5C1409',
+                        filter: 'drop-shadow(2px 2px 0 #5C1409) drop-shadow(2px 2px 0 #2B0A04)',
+                    }}
+                >
+                    Selected Work
+                </h2>
+                <motion.p
+                    aria-hidden
+                    animate={reduceMotion ? undefined : { opacity: [1, 1, 0, 0] }}
+                    transition={{ duration: 1.1, times: [0, 0.55, 0.56, 1], repeat: Infinity }}
+                    className="mt-4 md:mt-5 text-[10px] md:text-xs uppercase tracking-[0.2em]"
+                >
+                    Choose your project
+                </motion.p>
+                <p className="mt-3 font-mono text-[11px] uppercase tracking-widest text-gray-500">
+                    Or let the <span aria-hidden>?</span>
+                    <span className="sr-only">random</span> box decide
                     <span className="hidden lg:inline"> · type a code like A2 · R for random</span>
                 </p>
-            </div>
+            </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
                 {/* The screen: whatever is selected plays here. */}
