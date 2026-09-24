@@ -1,4 +1,4 @@
-import ProjectCard from './ProjectCard';
+import WorkSelect, { type WorkItem } from './WorkSelect';
 import { client } from '@/sanity/lib/client';
 import { PROJECTS_QUERY } from '@/sanity/lib/queries';
 import { urlFor } from '@/sanity/lib/image';
@@ -6,40 +6,18 @@ import { urlFor } from '@/sanity/lib/image';
 export default async function ProjectGrid() {
     const projects = await client.fetch(PROJECTS_QUERY);
 
-    return (
-        <section id="work" className="py-12">
-            <div className="flex justify-between items-baseline mb-12 border-b border-black dark:border-white pb-4">
-                <h2 className="text-4xl font-bold tracking-tighter uppercase">Selected Work</h2>
-            </div>
-            {/* 
-        Using CSS columns for a masonry-like effect. 
-        'columns-1 md:columns-2 lg:columns-3' creates the layout.
-        'gap-8' sets space between columns.
-      */}
-            <div className="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
-                {projects.length > 0 ? (
-                    projects.map((project: any, index: number) => {
-                        const block = project.content?.find((b: any) => b._type === 'block' && b.children);
-                        const summary = block ? block.children.map((c: any) => c.text).join('') : '';
+    const items: WorkItem[] = projects.map((project: any) => {
+        const block = project.content?.find((b: any) => b._type === 'block' && b.children);
+        return {
+            slug: project.slug,
+            title: project.title,
+            category: project.category,
+            date: project.date,
+            summary: block ? block.children.map((c: any) => c.text).join('') : undefined,
+            screen: project.mainImage ? urlFor(project.mainImage).width(1400).auto('format').quality(80).url() : undefined,
+            thumb: project.mainImage ? urlFor(project.mainImage).width(320).height(320).auto('format').url() : undefined,
+        };
+    });
 
-                        return (
-                            <ProjectCard
-                                key={project._id}
-                                index={index}
-                                title={project.title}
-                                category={project.category}
-                                slug={project.slug}
-                                image={project.mainImage ? urlFor(project.mainImage).width(800).url() : undefined}
-                                summary={summary}
-                            />
-                        );
-                    })
-                ) : (
-                    <div className="p-12 text-center border border-dashed border-gray-300 dark:border-gray-700 text-gray-400 font-mono">
-                        No projects found. Add them in the Sanity Studio.
-                    </div>
-                )}
-            </div>
-        </section>
-    );
+    return <WorkSelect items={items} />;
 }
