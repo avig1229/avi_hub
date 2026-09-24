@@ -12,8 +12,8 @@ const FACES = [
         cls: 'font-display',
         designer: 'Jovanny Lemonad',
         weights: '400, 700 + italics',
-        sample: 'One frame. Every personality.',
-        why: 'A humanist serif with calligraphic, slightly flared strokes. It is softer and more editorial than a hard geometric sans, which suits painted, handmade work like CORE: titles feel written, not stamped.',
+        sample: 'Made by hand, told in type.',
+        why: 'A humanist serif with calligraphic, slightly flared strokes. It is softer and more editorial than a hard geometric sans, so titles feel written, not stamped.',
     },
     {
         name: 'Mulish',
@@ -21,7 +21,7 @@ const FACES = [
         cls: 'font-sans',
         designer: 'Vernon Adams',
         weights: 'variable, 200–1000',
-        sample: 'The spine is the command center and the frame to a person’s appearance.',
+        sample: 'Open, even letterforms that stay easy to read, paragraph after paragraph.',
         why: 'A clean, low-contrast sans with open shapes. It stays quiet next to Philosopher and keeps longer stories easy to read, which the old all-monospace body text never did.',
     },
     {
@@ -30,12 +30,12 @@ const FACES = [
         cls: 'font-mono',
         designer: 'Christian Robertson',
         weights: 'variable, 100–700',
-        sample: 'SERIES 01 · SASHIKO',
-        why: 'Kept from the previous version, now only for small uppercase labels: series numbers, section tags, card name strips. A little technical texture, and a nod to the tech side of what I do.',
+        sample: 'SECTION 01 · INDEX',
+        why: 'Kept from the previous version, now only for small uppercase labels: section tags, numbering, and other small metadata. A little technical texture, and a nod to the tech side of what I do.',
     },
 ];
 
-const DEFAULT_TEXT = 'The spine is the CORE of life.';
+const DEFAULT_TEXT = 'The quick brown fox jumps over the lazy dog.';
 
 export default function TypeNotes() {
     const [text, setText] = useState(DEFAULT_TEXT);
