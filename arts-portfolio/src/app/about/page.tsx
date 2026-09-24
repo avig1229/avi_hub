@@ -1,4 +1,5 @@
 import Image from "next/image";
+import TypeNotes from "@/components/TypeNotes";
 
 export default function AboutPage() {
     return (
@@ -67,6 +68,8 @@ export default function AboutPage() {
                     </div>
                 </div>
             </div>
+
+            <TypeNotes />
         </div>
     );
 }
