@@ -12,19 +12,21 @@ import { structureTool } from 'sanity/structure'
 import { apiVersion, dataset, projectId } from './src/sanity/env'
 import { schema } from './src/sanity/schemaTypes'
 
+const SINGLETONS = ['siteGuide', 'musicRec']
+
 export default defineConfig({
     basePath: '/studio',
     projectId: projectId || '',
     dataset: dataset || '',
     // Add and edit the content schema in the './sanity/schema' folder
     schema,
-    // Keep the Site guide singleton out of the "create new" menu.
+    // Keep the singletons out of the "create new" menu.
     document: {
-        newDocumentOptions: (prev) => prev.filter((t) => t.templateId !== 'siteGuide'),
+        newDocumentOptions: (prev) => prev.filter((t) => !SINGLETONS.includes(t.templateId)),
     },
     plugins: [
         structureTool({
-            // Site guide is a singleton: one fixed document, no create/list.
+            // Singletons: one fixed document each, no create/list.
             structure: (S) =>
                 S.list()
                     .title('Content')
@@ -33,8 +35,12 @@ export default defineConfig({
                             .title('Site guide')
                             .id('siteGuide')
                             .child(S.document().schemaType('siteGuide').documentId('siteGuide')),
+                        S.listItem()
+                            .title('Weekly music rec')
+                            .id('musicRec')
+                            .child(S.document().schemaType('musicRec').documentId('musicRec')),
                         S.divider(),
-                        ...S.documentTypeListItems().filter((item) => item.getId() !== 'siteGuide'),
+                        ...S.documentTypeListItems().filter((item) => !SINGLETONS.includes(item.getId() ?? '')),
                     ]),
         }),
         // Vision is a tool that lets you query your content with GROQ in the studio

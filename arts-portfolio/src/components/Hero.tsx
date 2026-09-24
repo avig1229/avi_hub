@@ -12,24 +12,25 @@ import {
     useScroll,
     useTransform,
 } from 'framer-motion';
-import { useAudio, useSoundtrack } from './audio/AudioProvider';
+import { RecSleeve, useMusicRec } from './music/MusicRec';
 
 // Centre of the circle inside the "R", as a fraction of the logo's width/height (measured from /logo.svg).
 const R_CIRCLE = { x: 0.499, y: 0.3025 };
 // Where the mascot settles, as a fraction of the viewport height.
 const MASCOT_REST_Y = 0.44;
-// The home page's music. PLACEHOLDER loop until the real (licensed) track lands.
-const HOME_TRACK = '/audio/placeholder-loop.m4a';
 // Mascot scale once he has become the record's centre label.
 const LABEL_SCALE = 0.52;
 // Spin speeds in degrees per second: idle, and playing (33⅓ rpm).
 const SPIN_IDLE = 40;
 const SPIN_PLAYING = 200;
 
+// Side by side (record left, sleeve right) from md; stacked on phones.
+const WIDE = '(min-width: 768px)';
+
 export default function Hero() {
     const reduce = useReducedMotion();
-    useSoundtrack(HOME_TRACK);
-    const { enabled: playing, toggle } = useAudio();
+    // The weekly music rec (YouTube player in the record's sleeve) is the record's music.
+    const { playing, toggle, rec } = useMusicRec();
     const sectionRef = useRef<HTMLElement>(null);
     const stageRef = useRef<HTMLDivElement>(null);
     const logoRef = useRef<HTMLDivElement>(null);
@@ -56,13 +57,13 @@ export default function Hero() {
     }, [startX, startY]);
 
     // 1. The mascot is born in the R's circle and rises to the centre of the screen.
-    const emerge = useTransform(p, [0.05, 0.45], [0, 1], { clamp: true });
+    const emerge = useTransform(p, [0.05, 0.38], [0, 1], { clamp: true });
     const mascotX = useTransform(() => startX.get() * (1 - emerge.get()));
     const mascotY = useTransform(() => startY.get() * (1 - emerge.get()));
 
     // 2. He becomes a record: a grooved disc grows behind him while he shrinks
     //    onto its centre label. Once formed, the record (label and all) spins.
-    const vinyl = useTransform(p, [0.5, 0.7], [0, 1], { clamp: true });
+    const vinyl = useTransform(p, [0.42, 0.56], [0, 1], { clamp: true });
     const mascotScale = useTransform(() => emerge.get() * (1 - (1 - LABEL_SCALE) * vinyl.get()));
     const discScale = useTransform(vinyl, [0, 1], [0.35, 1]);
     const discOpacity = useTransform(vinyl, [0, 0.4], [0, 1]);
@@ -81,20 +82,45 @@ export default function Hero() {
             spin.set(Math.abs(upright - s) < 0.5 ? 0 : s + (upright - s) * 0.12);
         }
     });
-    const wobble = useTransform(p, [0.05, 0.45], [-20, 0]); // wobble out of the R
+    const wobble = useTransform(p, [0.05, 0.38], [-20, 0]); // wobble out of the R
     const mascotRotate = useTransform(() => wobble.get() + spin.get());
 
     // The wordmark steps back so the mascot has the stage.
-    const logoOpacity = useTransform(p, [0.2, 0.55], [1, 0.1]);
-    const logoScale = useTransform(p, [0, 0.55], [1, 0.92]);
+    const logoOpacity = useTransform(p, [0.2, 0.5], [1, 0.1]);
+    const logoScale = useTransform(p, [0, 0.5], [1, 0.92]);
 
-    // 3. The tagline arrives once the record has formed.
-    const taglineOpacity = useTransform(p, [0.72, 0.85], [0, 1]);
-    const taglineY = useTransform(p, [0.72, 0.85], [24, 0]);
+    // 3. The tagline has a moment with the finished record, then makes room.
+    const taglineOpacity = useTransform(p, [0.56, 0.62, 0.68, 0.73], [0, 1, 1, 0]);
+    const taglineY = useTransform(p, [0.56, 0.62], [24, 0]);
+
+    // 4. The record slides aside and its sleeve (the song's video and credit)
+    //    slides out from behind it: side by side on wide screens, stacked on phones.
+    const pair = useTransform(p, [0.72, 0.86], [0, 1], { clamp: true });
+    // Layout as a motion value, updated straight from resize so crossing the
+    // breakpoint re-runs these without waiting for a scroll or re-render.
+    const isWide = useMotionValue(1);
+    useLayoutEffect(() => {
+        const update = () => isWide.set(window.matchMedia(WIDE).matches ? 1 : 0);
+        update();
+        window.addEventListener('resize', update);
+        return () => window.removeEventListener('resize', update);
+    }, [isWide]);
+    const recordX = useTransform(() => `${(isWide.get() ? -44 : 0) * pair.get()}%`);
+    const recordY = useTransform(() => `${(isWide.get() ? 0 : -30) * pair.get()}%`);
+    const recordScale = useTransform(() => 1 - (isWide.get() ? 0 : 0.38) * pair.get());
+    const sleeveX = useTransform(() => `${(isWide.get() ? 56 : 0) * pair.get()}%`);
+    const sleeveY = useTransform(() => `${(isWide.get() ? 0 : 52) * pair.get()}%`);
+    const sleeveOpacity = useTransform(pair, [0, 0.35], [0, 1]);
+    const sleeveScale = useTransform(pair, [0, 1], [0.9, 1]);
+    const pillOpacity = useTransform(pair, [0, 0.4], [1, 0]);
+    // The tonearm would reach over the sleeve, so it bows out as they part.
+    const armOpacity = useTransform(() => discOpacity.get() * (1 - Math.min(1, pair.get() / 0.4)));
+    const [paired, setPaired] = useState(false);
+    useMotionValueEvent(pair, 'change', (v) => setPaired(v > 0.9));
     const hintOpacity = useTransform(p, [0, 0.08], [1, 0]);
 
     return (
-        <section ref={sectionRef} className="relative h-[340vh] -mt-24 mb-24">
+        <section ref={sectionRef} className="relative h-[420vh] -mt-24 mb-24">
             <div ref={stageRef} className="sticky top-0 h-svh flex items-center justify-center overflow-hidden">
                 <motion.div
                     ref={logoRef}
@@ -113,8 +139,19 @@ export default function Hero() {
                     </h1>
                 </motion.div>
 
-                <div
-                    style={{ top: `${MASCOT_REST_Y * 100}%` }}
+                {/* The sleeve sits behind the record until they part. */}
+                {rec && (
+                    <motion.div
+                        style={{ top: `${MASCOT_REST_Y * 100}%`, x: sleeveX, y: sleeveY, scale: sleeveScale, opacity: sleeveOpacity }}
+                        className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(58svh,82vw)] md:w-[min(58svh,40vw)]"
+                        aria-hidden={!paired || undefined}
+                    >
+                        <RecSleeve interactive={paired} />
+                    </motion.div>
+                )}
+
+                <motion.div
+                    style={{ top: `${MASCOT_REST_Y * 100}%`, x: recordX, y: recordY, scale: recordScale }}
                     className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(58svh,82vw)] aspect-square pointer-events-none"
                 >
                     {/* The record: grooves spin; the light's reflection on them stays put. */}
@@ -154,7 +191,7 @@ export default function Hero() {
                         aria-hidden
                         viewBox="0 0 100 100"
                         className="absolute -right-[6%] -top-[4%] w-[46%] h-[46%] overflow-visible"
-                        style={{ opacity: discOpacity, originX: '82%', originY: '14%' }}
+                        style={{ opacity: armOpacity, originX: '82%', originY: '14%' }}
                         animate={{ rotate: playing ? 24 : 0 }}
                         transition={{ type: 'spring', stiffness: 90, damping: 14 }}
                     >
@@ -175,20 +212,22 @@ export default function Hero() {
                             formed ? 'pointer-events-auto' : 'pointer-events-none'
                         }`}
                     />
-                    <AnimatePresence>
-                        {formed && (
-                            <motion.span
-                                aria-hidden
-                                className="absolute left-1/2 -bottom-2 -translate-x-1/2 translate-y-full whitespace-nowrap px-3 py-1.5 rounded-full border border-current/20 bg-white/70 dark:bg-black/60 backdrop-blur-sm font-mono text-[10px] md:text-xs tracking-[0.25em] text-gray-700 dark:text-gray-300"
-                                initial={{ opacity: 0, y: -6 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -6 }}
-                            >
-                                {playing ? '❚❚ LIFT THE NEEDLE' : '▶ DROP THE NEEDLE'}
-                            </motion.span>
-                        )}
-                    </AnimatePresence>
-                </div>
+                    <motion.div style={{ opacity: pillOpacity }}>
+                        <AnimatePresence>
+                            {formed && (
+                                <motion.span
+                                    aria-hidden
+                                    className="absolute left-1/2 -bottom-2 -translate-x-1/2 translate-y-full whitespace-nowrap px-3 py-1.5 rounded-full border border-current/20 bg-white/70 dark:bg-black/60 backdrop-blur-sm font-mono text-[10px] md:text-xs tracking-[0.25em] text-gray-700 dark:text-gray-300"
+                                    initial={{ opacity: 0, y: -6 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -6 }}
+                                >
+                                    {playing ? '❚❚ LIFT THE NEEDLE' : '▶ DROP THE NEEDLE'}
+                                </motion.span>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+                </motion.div>
 
                 <motion.p
                     style={{ opacity: taglineOpacity, y: taglineY }}

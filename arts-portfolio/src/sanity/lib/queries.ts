@@ -59,3 +59,10 @@ export const SITE_GUIDE_QUERY = groq`*[_id == "siteGuide"][0] {
   typeNotes,
   idle
 }`;
+
+// The home page's weekly music rec (singleton).
+export const MUSIC_REC_QUERY = groq`*[_id == "musicRec"][0] {
+  youtubeUrl,
+  note,
+  weekOf
+}`;
