@@ -100,3 +100,20 @@ body:has([data-dark-canvas]) nav {
   color: #fff;
 }
 
+/* The site guide steps aside while a full-screen or bottom overlay is open. */
+.guide-dock {
+  transition: opacity 0.25s ease, visibility 0.25s;
+}
+
+body:has([data-guide-hide="always"]) .guide-dock {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Overlays that only exist on phones (sm:hidden above 640px). */
+@media (max-width: 639px) {
+  body:has([data-guide-hide="phone"]) .guide-dock {
+    opacity: 0;
+    visibility: hidden;
+  }
+}

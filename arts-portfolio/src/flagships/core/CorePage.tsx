@@ -2,6 +2,7 @@ import { groq } from 'next-sanity';
 import { client } from '@/sanity/lib/client';
 import { BUILTIN_SERIES, DEFAULT_SERIES, FALLBACK_COLORS, shiftHue } from './content';
 import CoreExperience from './CoreExperience';
+import { CORE_GUIDE_DEFAULTS } from '@/components/guide/defaults';
 import type { Piece, SeriesData } from './Collection';
 
 const PIECE = `{
@@ -16,11 +17,14 @@ const PIECE = `{
 const CORE_QUERY = groq`*[_type == "project" && slug.current == "core-collection"][0] {
   date,
   content,
+  guide,
+  guideAnatomy,
   "pieces": gallery[_type == "image" && defined(asset)]${PIECE},
   subsections[]{
     title,
     description,
     accent,
+    guide,
     "pieces": gallery[_type == "image" && defined(asset)]${PIECE}
   }
 }`;
@@ -32,8 +36,10 @@ type CorePiece = Piece & { file?: string };
 type CoreData = {
     date?: string;
     content?: Block[];
+    guide?: string;
+    guideAnatomy?: string;
     pieces?: CorePiece[];
-    subsections?: { title?: string; description?: Block[]; accent?: string; pieces?: CorePiece[] }[];
+    subsections?: { title?: string; description?: Block[]; accent?: string; guide?: string; pieces?: CorePiece[] }[];
 } | null;
 
 const plainText = (blocks?: Block[]) =>
@@ -69,6 +75,7 @@ export default async function CorePage() {
                 title: s.title!.trim(),
                 blurb: plainText(s.description).join(' ') || builtin?.blurb,
                 ...colorsFor(s.accent, builtin, i),
+                guide: s.guide?.trim() || CORE_GUIDE_DEFAULTS.series[id],
                 pieces: s.pieces ?? [],
             };
         });
@@ -83,7 +90,7 @@ export default async function CorePage() {
         let section = sections.find((s) => s.id === target);
         if (!section) {
             const b = BUILTIN_SERIES.find((s) => s.id === target)!;
-            section = { id: b.id, title: b.title, blurb: b.blurb, accent: b.accent, glow: b.glow, pieces: [] };
+            section = { id: b.id, title: b.title, blurb: b.blurb, accent: b.accent, glow: b.glow, guide: CORE_GUIDE_DEFAULTS.series[b.id], pieces: [] };
             sections.push(section);
         }
         section.pieces.push(piece);
@@ -95,5 +102,15 @@ export default async function CorePage() {
         sections.sort((a, b) => rank(a.id) - rank(b.id));
     }
 
-    return <CoreExperience year={data?.date} story={plainText(data?.content)} series={sections} />;
+    return (
+        <CoreExperience
+            year={data?.date}
+            story={plainText(data?.content)}
+            series={sections}
+            guide={{
+                origin: data?.guide?.trim() || CORE_GUIDE_DEFAULTS.origin,
+                anatomy: data?.guideAnatomy?.trim() || CORE_GUIDE_DEFAULTS.anatomy,
+            }}
+        />
+    );
 }

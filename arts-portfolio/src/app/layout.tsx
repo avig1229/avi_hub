@@ -30,12 +30,20 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { AudioProvider } from "@/components/audio/AudioProvider";
+import { GuideProvider } from "@/components/guide/Guide";
+import { client } from "@/sanity/lib/client";
+import { SITE_GUIDE_QUERY } from "@/sanity/lib/queries";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Revalidated, so pages stay static; a Sanity outage just means default lines.
+  const siteGuide = await client
+    .fetch(SITE_GUIDE_QUERY, {}, { next: { revalidate: 60 } })
+    .catch(() => null);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -49,11 +57,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AudioProvider>
-            <Navigation />
-            <main className="min-h-screen pt-24 px-6 md:px-12 max-w-[1920px] mx-auto">
-              {children}
-            </main>
-            <Footer />
+            <GuideProvider site={siteGuide}>
+              <Navigation />
+              <main className="min-h-screen pt-24 px-6 md:px-12 max-w-[1920px] mx-auto">
+                {children}
+              </main>
+              <Footer />
+            </GuideProvider>
           </AudioProvider>
         </ThemeProvider>
       </body>

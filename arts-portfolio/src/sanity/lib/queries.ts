@@ -19,7 +19,7 @@ export const PROJECT_QUERY = groq`*[_type == "project" && slug.current == $slug]
   date,
   mainImage,
   content,
-  content,
+  guide,
   links,
   gallery[]{
     ...,
@@ -49,4 +49,13 @@ export const PROJECT_QUERY = groq`*[_type == "project" && slug.current == $slug]
       }
     }
   }
+}`;
+
+// The site guide's name and site-wide lines (singleton).
+export const SITE_GUIDE_QUERY = groq`*[_id == "siteGuide"][0] {
+  name,
+  home,
+  about,
+  typeNotes,
+  idle
 }`;

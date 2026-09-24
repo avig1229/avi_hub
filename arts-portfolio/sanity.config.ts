@@ -18,8 +18,25 @@ export default defineConfig({
     dataset: dataset || '',
     // Add and edit the content schema in the './sanity/schema' folder
     schema,
+    // Keep the Site guide singleton out of the "create new" menu.
+    document: {
+        newDocumentOptions: (prev) => prev.filter((t) => t.templateId !== 'siteGuide'),
+    },
     plugins: [
-        structureTool(),
+        structureTool({
+            // Site guide is a singleton: one fixed document, no create/list.
+            structure: (S) =>
+                S.list()
+                    .title('Content')
+                    .items([
+                        S.listItem()
+                            .title('Site guide')
+                            .id('siteGuide')
+                            .child(S.document().schemaType('siteGuide').documentId('siteGuide')),
+                        S.divider(),
+                        ...S.documentTypeListItems().filter((item) => item.getId() !== 'siteGuide'),
+                    ]),
+        }),
         // Vision is a tool that lets you query your content with GROQ in the studio
         // https://www.sanity.io/docs/the-vision-plugin
         visionTool({ defaultApiVersion: apiVersion }),

@@ -17,9 +17,10 @@ import {
 } from 'framer-motion';
 import type { SeriesMeta } from './content';
 import { enableTilt, tiltX, tiltY, useDeviceTilt } from './useDeviceTilt';
+import { GuideSpot } from '@/components/guide/Guide';
 
 export type Piece = { url: string; caption?: string; story?: string; width: number; height: number };
-export type SeriesData = SeriesMeta & { pieces: Piece[] };
+export type SeriesData = SeriesMeta & { guide?: string; pieces: Piece[] };
 
 type Selection = { series: number; piece: number };
 
@@ -135,6 +136,7 @@ function SeriesSection({
 
     return (
         <section id={meta.id} className="relative isolate py-24 md:py-36">
+            {meta.guide && <GuideSpot id={`core:series:${meta.id}`} text={meta.guide} className="absolute top-[25%] left-0" />}
             <div
                 aria-hidden
                 className="absolute inset-0 -z-10 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_20%,black_80%,transparent)]"
@@ -424,6 +426,7 @@ function PieceDetail({
             role="dialog"
             aria-modal="true"
             aria-label={title || pieceAlt(piece, meta, selected.piece)}
+            data-guide-hide="always"
             className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm overflow-y-auto text-[#e6e1d6]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

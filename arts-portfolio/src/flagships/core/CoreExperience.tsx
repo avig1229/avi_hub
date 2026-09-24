@@ -16,6 +16,7 @@ import {
 } from 'framer-motion';
 import { useSoundtrack } from '@/components/audio/AudioProvider';
 import Collection, { type SeriesData } from './Collection';
+import { GuideSpot } from '@/components/guide/Guide';
 import {
     ANATOMY,
     EYE,
@@ -32,10 +33,12 @@ export default function CoreExperience({
     year,
     story,
     series,
+    guide,
 }: {
     year?: string;
     story: string[];
     series: SeriesData[];
+    guide: { origin?: string; anatomy?: string };
 }) {
     useSoundtrack(SOUNDTRACK);
 
@@ -45,8 +48,8 @@ export default function CoreExperience({
             data-dark-canvas
             className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 bg-black text-[#e6e1d6]"
         >
-            <Origin year={year} story={story} />
-            <Anatomy />
+            <Origin year={year} story={story} guide={guide.origin} />
+            <Anatomy guide={guide.anatomy} />
             <Collection series={series} />
         </div>
     );
@@ -68,7 +71,7 @@ function SpineImage({ priority }: { priority?: boolean }) {
     );
 }
 
-function Origin({ year, story }: { year?: string; story: string[] }) {
+function Origin({ year, story, guide }: { year?: string; story: string[]; guide?: string }) {
     const ref = useRef<HTMLElement>(null);
     const reduce = useReducedMotion();
     const { scrollYProgress: p } = useScroll({ target: ref, offset: ['start start', 'end end'] });
@@ -88,7 +91,8 @@ function Origin({ year, story }: { year?: string; story: string[] }) {
 
     if (reduce) {
         return (
-            <section className="max-w-[1400px] mx-auto px-6 md:px-12 pt-32 pb-24 grid md:grid-cols-2 gap-12 items-center">
+            <section className="relative max-w-[1400px] mx-auto px-6 md:px-12 pt-32 pb-24 grid md:grid-cols-2 gap-12 items-center">
+                {guide && <GuideSpot id="core:origin" text={guide} className="absolute top-0 left-0" />}
                 <div className="space-y-6">
                     <h1 className="text-[18vw] md:text-[10vw] font-bold tracking-tighter leading-none">CORE</h1>
                     {story.map((s, i) => (
@@ -104,6 +108,8 @@ function Origin({ year, story }: { year?: string; story: string[] }) {
 
     return (
         <section ref={ref} style={{ height: `${140 + story.length * 80}vh` }} className="relative">
+            {/* Just after the title card fades. */}
+            {guide && <GuideSpot id="core:origin" text={guide} className="absolute top-[18%] left-0" />}
             <div className="sticky top-0 h-screen overflow-hidden">
                 <div className="h-full max-w-[1400px] mx-auto px-6 md:px-12 grid grid-rows-[1fr_auto] md:grid-rows-1 md:grid-cols-2 items-center gap-6 md:gap-16 pt-20 pb-8">
                     {/* Spine */}
@@ -254,7 +260,7 @@ function Highlight({ part }: { part: AnatomyPart['id'] }) {
 
 const noop = () => () => {};
 
-function Anatomy() {
+function Anatomy({ guide }: { guide?: string }) {
     const [active, setActive] = useState<AnatomyPart['id'] | null>(null);
     const current = ANATOMY.find((a) => a.id === active);
     const sectionRef = useRef<HTMLElement>(null);
@@ -267,8 +273,9 @@ function Anatomy() {
     return (
         <section
             ref={sectionRef}
-            className="min-h-screen max-w-[1400px] mx-auto px-6 md:px-12 pt-24 pb-36 sm:py-24 grid sm:grid-cols-[auto_1fr] gap-8 sm:gap-8 md:gap-12 lg:gap-20 items-center"
+            className="relative min-h-screen max-w-[1400px] mx-auto px-6 md:px-12 pt-24 pb-36 sm:py-24 grid sm:grid-cols-[auto_1fr] gap-8 sm:gap-8 md:gap-12 lg:gap-20 items-center"
         >
+            {guide && <GuideSpot id="core:anatomy" text={guide} className="absolute top-[30%] left-0" />}
             <div className="relative w-[min(100%,41.7vh)] sm:w-[min(40vw,59.77vh)] aspect-[139/200] mx-auto">
                 <SpineImage />
                 <AnimatePresence mode="wait">
@@ -387,6 +394,7 @@ function AnatomySheet({ part, onClose }: { part: AnatomyPart; onClose: () => voi
         <motion.div
             role="dialog"
             aria-label={part.title}
+            data-guide-hide="phone"
             className="sm:hidden fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-white/10 bg-[#141312]/90 backdrop-blur-md text-[#e6e1d6] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.9)]"
             initial={{ y: 120, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}

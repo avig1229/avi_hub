@@ -1,5 +1,6 @@
 import Image from "next/image";
 import TypeNotes from "@/components/TypeNotes";
+import { GuideSpot } from "@/components/guide/Guide";
 
 export default function AboutPage() {
     return (
@@ -7,6 +8,7 @@ export default function AboutPage() {
             <h1 className="text-[12vw] leading-[0.8] font-black tracking-tighter mb-24 text-center md:text-left mix-blend-difference">
                 ABOUT
             </h1>
+            <GuideSpot id="about" siteKey="about" />
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-24 items-start">
 
@@ -69,6 +71,7 @@ export default function AboutPage() {
                 </div>
             </div>
 
+            <GuideSpot id="type-notes" siteKey="typeNotes" />
             <TypeNotes />
         </div>
     );

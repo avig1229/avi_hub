@@ -7,6 +7,7 @@ import Image from 'next/image';
 import ProjectTabs from '@/components/ProjectTabs';
 import GalleryGrid from '@/components/GalleryGrid';
 import { flagships } from '@/flagships';
+import { GuideSpot } from '@/components/guide/Guide';
 
 export default async function ProjectPage({
     params,
@@ -42,6 +43,8 @@ export default async function ProjectPage({
                 </div>
 
             </header>
+
+            {project.guide && <GuideSpot id={`project:${slug}`} text={project.guide} />}
 
             {project.mainImage && (
                 <div className="mb-12 max-w-[90%] mx-auto">

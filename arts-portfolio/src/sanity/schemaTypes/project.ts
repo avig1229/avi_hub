@@ -56,6 +56,21 @@ export default defineType({
             type: 'blockContent',
         }),
         defineField({
+            name: 'guide',
+            title: 'Guide says',
+            type: 'text',
+            rows: 3,
+            description: 'What the site guide says when visitors reach this. Leave a blank line between pages of dialogue. On CORE: shown at the Origin intro.',
+        }),
+        defineField({
+            name: 'guideAnatomy',
+            title: 'Guide says (Anatomy)',
+            type: 'text',
+            rows: 3,
+            description: 'CORE only: shown at the Anatomy section.',
+            hidden: ({ document }) => (document?.slug as { current?: string } | undefined)?.current !== 'core-collection',
+        }),
+        defineField({
             name: 'links',
             title: 'Project Links',
             type: 'array',
@@ -124,6 +139,13 @@ export default defineType({
                             name: 'description',
                             title: 'Description',
                             type: 'blockContent',
+                        },
+                        {
+                            name: 'guide',
+                            title: 'Guide says',
+                            type: 'text',
+                            rows: 3,
+                            description: 'What the site guide says when visitors reach this. Leave a blank line between pages of dialogue.',
                         },
                         {
                             name: 'accent',
