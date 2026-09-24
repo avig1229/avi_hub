@@ -8,12 +8,7 @@ export const PROJECTS_QUERY = groq`*[_type == "project"] | order(title != "shRma
   category,
   date,
   mainImage,
-  content,
-  "galleryCount": count(gallery),
-  "linksCount": count(links),
-  subsections[]{
-    gallery
-  }
+  content
 }`;
 
 // Get a single project by slug
