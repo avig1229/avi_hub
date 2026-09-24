@@ -60,7 +60,7 @@ export default defineType({
             title: 'Guide says',
             type: 'text',
             rows: 3,
-            description: 'What the site guide says when visitors reach this. Leave a blank line between pages of dialogue. On CORE: shown at the Origin intro.',
+            description: 'What the site guide says when a visitor opens this project. Leave a blank line between pages of dialogue. Empty uses the built-in draft, if there is one. On CORE: shown at the Origin intro.',
         }),
         defineField({
             name: 'guideAnatomy',
@@ -145,7 +145,7 @@ export default defineType({
                             title: 'Guide says',
                             type: 'text',
                             rows: 3,
-                            description: 'What the site guide says when visitors reach this. Leave a blank line between pages of dialogue.',
+                            description: 'What the site guide says the first time a visitor opens this section. Leave a blank line between pages of dialogue. Empty uses the built-in draft, if there is one.',
                         },
                         {
                             name: 'accent',

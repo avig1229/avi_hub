@@ -18,10 +18,11 @@ import { SITE_GUIDE_DEFAULTS, type SiteGuideLines } from './defaults';
 const SEEN_KEY = 'shrma-guide-seen';
 const CHARS_PER_SECOND = 45;
 
-type Message = { key: string; pages: string[] };
+// `group`: a newer line in the same group replaces an open or queued one (e.g. project tabs).
+type Message = { key: string; pages: string[]; group?: string };
 
 type GuideContextValue = {
-    say: (id: string, text: string) => void;
+    say: (id: string, text: string, opts?: { group?: string }) => void;
     // Hold the dock off screen while `on` for this id.
     hold: (id: string, on: boolean) => void;
     site: SiteGuideLines;
@@ -93,10 +94,10 @@ export function GuideProvider({
     }, []);
 
     const say = useCallback(
-        (id: string, text: string) => {
+        (id: string, text: string, opts?: { group?: string }) => {
             const pages = toPages(text);
             if (!pages.length) return;
-            const msg = { key: `${id}:${hash(text)}`, pages };
+            const msg: Message = { key: `${id}:${hash(text)}`, pages, group: opts?.group };
             const seen = readSeen();
             if (seen.has(msg.key)) {
                 last.current = msg; // heard before: tapping the head replays it
@@ -104,6 +105,12 @@ export function GuideProvider({
             }
             seen.add(msg.key);
             writeSeen(seen);
+            if (msg.group) {
+                // Moving on within a group (say, to another tab): drop what's
+                // pending for the old spot, and cut in if that's what is showing.
+                queue.current = queue.current.filter((m) => m.group !== msg.group);
+                if (open.current?.group === msg.group) return show(msg);
+            }
             // One box at a time: later lines wait their turn.
             if (open.current) queue.current = [...queue.current.filter((m) => m.key !== msg.key), msg];
             else show(msg);
@@ -150,10 +157,12 @@ export function GuideSpot({
     text,
     siteKey,
     revealsGuide = false,
+    group,
     className = '',
 }: {
     id: string;
     text?: string | null;
+    group?: string;
     siteKey?: Exclude<keyof SiteGuideLines, 'name'>;
     revealsGuide?: boolean;
     className?: string;
@@ -164,8 +173,8 @@ export function GuideSpot({
     const line = text?.trim() || (siteKey ? site[siteKey] : '');
 
     useEffect(() => {
-        if (inView && line) say(id, line);
-    }, [inView, line, id, say]);
+        if (inView && line) say(id, line, { group });
+    }, [inView, line, id, say, group]);
 
     // Keep the dock hidden while this spot is still below the reveal line, so
     // scrolling back up above it tucks him away again. Released on leaving the page.

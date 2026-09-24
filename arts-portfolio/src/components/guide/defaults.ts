@@ -28,3 +28,32 @@ export const CORE_GUIDE_DEFAULTS = {
         experimentals: `The Experimentals. Anything goes here, including the ones that argue with the rules.`,
     } as Record<string, string>,
 };
+
+// Built-in lines for regular project pages, by slug. `intro` plays when the
+// page opens; `sections` play the first time each tab is opened, keyed by the
+// section's title in Sanity. A project's own "Guide says" fields in Sanity
+// replace these. CORE has its own set above.
+export const PROJECT_GUIDE_DEFAULTS: Record<string, { intro?: string; sections?: Record<string, string> }> = {
+    shrma: {
+        intro: `shRma is Avi's middle name. Now it's his label.\n\nEach tab up there is a different piece of it. Open them and watch what he borrows from.`,
+        sections: {
+            'Hoodie Vision Board': `The yee-haw hoodie. His first sell-out.\n\nFollow it from the first board to the anniversary remake. Same bones, sharper cut.`,
+            'Logo Design': `Old-school Stüssy energy.\n\nSymmetrical, a little classy, still street. It dresses up or down.`,
+            "'THE' Baseball Jersey Shirt": `Baseball, cut for the runway.\n\nNot too long, not too baggy. The mood boards come first, then the real thing.`,
+            "'Take me to Temple' Loafer designs": `Taiwanese Taoist temples, on a loafer.\n\nLook for the temple ornament he pulled into the shoe.`,
+            'shRma Jewelry Line': `Small bling, big plans.\n\nThese are early contours. Squint a little and picture them on.`,
+        },
+    },
+    branding: {
+        intro: `Avi rebuilt his dad's travel agency in Nepal: the brand and the site.\n\nStart with the vision boards, then find the final logo. Watch the ideas get boiled down to one mark.`,
+    },
+    'hear-feel-create': {
+        intro: `One drawing, one song.\n\nHe drew while the track played, so the lines move the way the music does. The captions name the songs. Put one on and look again.`,
+    },
+    'our-uneaten-taipei': {
+        intro: `Six episodes, one city, lots of food.\n\nThis is where Avi first tried colour grading and VFX. Watch the warmth and texture change from episode to episode.`,
+    },
+    archive: {
+        intro: `The vault. Sketches, side quests, half-ideas.\n\nYou'll find a few early versions of me in here too. I've had some looks.`,
+    },
+};
