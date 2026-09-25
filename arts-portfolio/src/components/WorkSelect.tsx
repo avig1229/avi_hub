@@ -4,10 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Press_Start_2P } from 'next/font/google';
-
-// Pixel face for the arcade-cabinet title; loaded only where this section is used.
-const arcade = Press_Start_2P({ weight: '400', subsets: ['latin'], display: 'swap' });
+import { arcade, arcadeTitleStyle } from './arcade';
 
 export interface WorkItem {
     slug: string;
@@ -150,12 +147,8 @@ export default function WorkSelect({ items }: { items: WorkItem[] }) {
             {/* Arcade-cabinet title, like a fighting game's select screen. */}
             <header className={`${arcade.className} text-center mb-10 md:mb-14`}>
                 <h2
-                    className={`${arcade.className} inline-block uppercase leading-[1.15] text-[clamp(1.35rem,5.2vw,3.75rem)] bg-clip-text text-transparent`}
-                    style={{
-                        backgroundImage: 'linear-gradient(180deg, #FFF3B0 0%, #FFD23F 38%, #FF8A1F 62%, #D7263D 100%)',
-                        WebkitTextStroke: '1px #5C1409',
-                        filter: 'drop-shadow(2px 2px 0 #5C1409) drop-shadow(2px 2px 0 #2B0A04)',
-                    }}
+                    className={`${arcade.className} inline-block uppercase leading-[1.15] text-[clamp(1.35rem,5.2vw,3.75rem)]`}
+                    style={arcadeTitleStyle}
                 >
                     Selected Work
                 </h2>

@@ -1,11 +1,9 @@
 import Hero from "@/components/Hero";
-import ProjectGrid from "@/components/ProjectGrid";
-import { GuideSpot } from "@/components/guide/Guide";
+import Room from "@/components/room/Room";
 import { MusicRecProvider } from "@/components/music/MusicRec";
 import { getMusicRec } from "@/components/music/getMusicRec";
 
-// Re-fetch projects from Sanity at most once a minute, so new uploads
-// appear without a redeploy.
+// Re-fetch Sanity content (the music rec) at most once a minute.
 export const revalidate = 60;
 
 export default async function Home() {
@@ -14,8 +12,7 @@ export default async function Home() {
   const page = (
     <div className="min-h-screen">
       <Hero />
-      <GuideSpot id="home" siteKey="home" revealsGuide />
-      <ProjectGrid />
+      <Room />
     </div>
   );
   return rec ? <MusicRecProvider rec={rec}>{page}</MusicRecProvider> : page;

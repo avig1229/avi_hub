@@ -11,7 +11,7 @@ export default function Navigation() {
                     <Logo className="h-8 md:h-9" />
                 </Link>
                 <div className="flex gap-6 text-sm font-medium items-center">
-                    <Link href="/" className="hover:underline underline-offset-4 decoration-1">
+                    <Link href="/work" className="hover:underline underline-offset-4 decoration-1">
                         WORK
                     </Link>
                     <Link href="/about" className="hover:underline underline-offset-4 decoration-1">
