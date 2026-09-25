@@ -160,10 +160,10 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
     const panTo = (spot: Spot) =>
         animate(focusX, clampFocus(toWorldX(spot.box.x + spot.box.w / 2)), reduce ? { duration: 0 } : { duration: 0.6, ease: 'easeInOut' });
 
-    const fadeIn = useTransform(p, [0, 0.02], [0, 1]);
-    // The room starts one screen early, over the hero's last frame; until it has
-    // faded in it must not catch taps meant for the hero's record player.
-    const stageEvents = useTransform(fadeIn, (v) => (v > 0.9 ? 'auto' : 'none'));
+    // The room starts one screen early, over the hero's last frame. It stays
+    // hidden (and lets taps through to the hero) until a transition has
+    // covered the screen and settled on it, so the cut is never seen.
+    const [shown, setShown] = useState(false);
 
     // ── Entering: crossing from the hero into the room plays the loading
     // screen (Third Eye runs across), settles the page on the room, then he
@@ -283,15 +283,16 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
             sessionStorage.setItem(LOADED_KEY, '1');
         } catch {}
 
-        // Settle on the room with him at the left edge (under the cover).
-        const settle = () => {
+        // Settle on the room (under the cover), with him at `at`.
+        const settle = (at: Point) => {
             const view = document.getElementById('room-view');
             if (view) window.scrollTo({ top: view.getBoundingClientRect().top + window.scrollY, behavior: 'instant' });
             walkRef.current.forEach((a) => a.stop());
-            kx.set(FLOOR.x);
-            ky.set(KID_START.y);
+            kx.set(at.x);
+            ky.set(at.y);
             setFacing(1);
-            focusX.set(clampFocus(toWorldX(FLOOR.x)));
+            focusX.set(clampFocus(toWorldX(at.x)));
+            setShown(true);
         };
         const walkIn = () => {
             setTransition('none');
@@ -300,34 +301,39 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
 
         if (firstTime || reduce) {
             setTransition('load');
-            settle();
+            // He walks in from the left edge once the loading screen lifts.
+            settle({ x: FLOOR.x, y: KID_START.y });
             window.setTimeout(walkIn, reduce ? 350 : RUN_MS + 150);
             return;
         }
 
-        // The iris: close to black on the middle of the screen, settle, then
-        // open again on Third Eye.
+        // The iris: close to black on the middle of the screen (still the hero),
+        // hold a beat, settle on the room, then open again on Third Eye, who is
+        // already standing on the rug.
         const maxR = Math.hypot(window.innerWidth, window.innerHeight);
         irisX.set(window.innerWidth / 2);
         irisY.set(window.innerHeight / 2);
         irisR.set(maxR);
         setTransition('iris');
         await animate(irisR, 0, { duration: IRIS_MS / 1000, ease: [0.5, 0, 0.9, 0.5] });
-        settle();
+        settle(KID_START);
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
         const kid = kidRef.current?.getBoundingClientRect();
         if (kid) {
             irisX.set(kid.left + kid.width / 2);
             irisY.set(kid.top + kid.height / 2);
         }
-        await new Promise((r) => window.setTimeout(r, 120));
+        await new Promise((r) => window.setTimeout(r, 180));
         await animate(irisR, maxR, { duration: (IRIS_MS + 150) / 1000, ease: [0.2, 0.6, 0.4, 1] });
-        walkIn();
+        setTransition('none');
     }, [kx, ky, focusX, clampFocus, toWorldX, walkTo, reduce, irisR, irisX, irisY]);
 
     useMotionValueEvent(p, 'change', (v) => {
         if (v < 0.01) {
-            if (entered && !loading) setEntered(false);
+            if (entered && !loading) {
+                setEntered(false);
+                setShown(false);
+            }
         } else if (!entered && v > 0.02 && v < 0.95) enter();
     });
     // Arriving already in the room (the back button, "back to the room").
@@ -450,7 +456,7 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
 
             <motion.div
                 ref={stageRef}
-                style={{ opacity: fadeIn, pointerEvents: stageEvents }}
+                style={{ opacity: shown ? 1 : 0, pointerEvents: shown ? 'auto' : 'none' }}
                 className="sticky top-0 h-svh overflow-hidden bg-[#E8E2D8] select-none touch-pan-y"
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
