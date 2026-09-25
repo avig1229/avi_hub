@@ -40,8 +40,8 @@ export default async function ProjectPage({
 
     return (
         <article className="min-h-screen py-12 animate-in fade-in duration-500 max-w-[1080px] mx-auto px-4">
-            <Link href="/" className="inline-block mb-12 text-sm font-mono text-gray-500 hover:text-black dark:hover:text-white transition-colors">
-                ← BACK TO INDEX
+            <Link href="/work" className="inline-block mb-12 text-sm font-mono text-gray-500 hover:text-black dark:hover:text-white transition-colors">
+                ← BACK TO SELECT
             </Link>
 
             <header className="mb-16">

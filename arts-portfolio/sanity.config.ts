@@ -12,7 +12,7 @@ import { structureTool } from 'sanity/structure'
 import { apiVersion, dataset, projectId } from './src/sanity/env'
 import { schema } from './src/sanity/schemaTypes'
 
-const SINGLETONS = ['siteGuide', 'musicRec']
+const SINGLETONS = ['siteGuide', 'musicRec', 'recordCrate']
 
 export default defineConfig({
     basePath: '/studio',
@@ -39,6 +39,10 @@ export default defineConfig({
                             .title('Weekly music rec')
                             .id('musicRec')
                             .child(S.document().schemaType('musicRec').documentId('musicRec')),
+                        S.listItem()
+                            .title('Record crate')
+                            .id('recordCrate')
+                            .child(S.document().schemaType('recordCrate').documentId('recordCrate')),
                         S.divider(),
                         ...S.documentTypeListItems().filter((item) => !SINGLETONS.includes(item.getId() ?? '')),
                     ]),
