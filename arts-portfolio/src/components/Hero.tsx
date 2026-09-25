@@ -1,6 +1,6 @@
 'use client';
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import FabricLogo from './FabricLogo';
 import {
     AnimatePresence,
@@ -70,6 +70,10 @@ export default function Hero() {
 
     const [formed, setFormed] = useState(false);
     useMotionValueEvent(vinyl, 'change', (v) => setFormed(v > 0.97));
+    useEffect(() => {
+        const id = requestAnimationFrame(() => setFormed(vinyl.get() > 0.97));
+        return () => cancelAnimationFrame(id);
+    }, [vinyl]);
 
     // Spin accrues while formed (faster while the music plays); un-formed, it
     // eases back upright so he turns back into the mascot the right way up.
@@ -106,10 +110,15 @@ export default function Hero() {
         return () => window.removeEventListener('resize', update);
     }, [isWide]);
     const recordX = useTransform(() => `${(isWide.get() ? -44 : 0) * pair.get()}%`);
-    const recordY = useTransform(() => `${(isWide.get() ? 0 : -30) * pair.get()}%`);
-    const recordScale = useTransform(() => 1 - (isWide.get() ? 0 : 0.38) * pair.get());
+    // Stacked (phones): the record shrinks up to the top (centre at 20% of the
+    // screen) and the sleeve's top edge lands at 34%, so the whole player, crate
+    // row included, stays on screen.
+    const recordY = useTransform(() => (isWide.get() ? '0%' : `${-(MASCOT_REST_Y * 100 - 20) * pair.get()}vh`));
+    const recordScale = useTransform(() => 1 - (isWide.get() ? 0 : 0.55) * pair.get());
     const sleeveX = useTransform(() => `${(isWide.get() ? 56 : 0) * pair.get()}%`);
-    const sleeveY = useTransform(() => `${(isWide.get() ? 0 : 52) * pair.get()}%`);
+    const sleeveY = useTransform(() =>
+        isWide.get() ? '0%' : `calc((50% - ${MASCOT_REST_Y * 100 - 34}vh) * ${pair.get()})`,
+    );
     const sleeveOpacity = useTransform(pair, [0, 0.35], [0, 1]);
     const sleeveScale = useTransform(pair, [0, 1], [0.9, 1]);
     const pillOpacity = useTransform(pair, [0, 0.4], [1, 0]);
@@ -117,6 +126,11 @@ export default function Hero() {
     const armOpacity = useTransform(() => discOpacity.get() * (1 - Math.min(1, pair.get() / 0.4)));
     const [paired, setPaired] = useState(false);
     useMotionValueEvent(pair, 'change', (v) => setPaired(v > 0.9));
+    // Also on load: a reload or the back button can land here with no scroll to trigger it.
+    useEffect(() => {
+        const id = requestAnimationFrame(() => setPaired(pair.get() > 0.9));
+        return () => cancelAnimationFrame(id);
+    }, [pair]);
     const hintOpacity = useTransform(p, [0, 0.08], [1, 0]);
 
     return (
@@ -139,7 +153,8 @@ export default function Hero() {
                 {rec && (
                     <motion.div
                         style={{ top: `${MASCOT_REST_Y * 100}%`, x: sleeveX, y: sleeveY, scale: sleeveScale, opacity: sleeveOpacity }}
-                        className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(58svh,82vw)] md:w-[min(58svh,40vw)]"
+                        // Above the record once they've parted, so the record's play button can't cover the player.
+                        className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(58svh,82vw)] md:w-[min(58svh,40vw)] ${paired ? 'z-10' : ''}`}
                         aria-hidden={!paired || undefined}
                     >
                         <RecSleeve interactive={paired} />
