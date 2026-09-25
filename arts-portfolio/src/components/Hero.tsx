@@ -13,6 +13,7 @@ import {
     useTransform,
 } from 'framer-motion';
 import { RecSleeve, useMusicRec } from './music/MusicRec';
+import { arcade } from './arcade';
 
 // Centre of the circle inside the "R", as a fraction of the logo's width/height (measured from /logo.svg).
 const R_CIRCLE = { x: 0.499, y: 0.3025 };
@@ -132,6 +133,8 @@ export default function Hero() {
         return () => cancelAnimationFrame(id);
     }, [pair]);
     const hintOpacity = useTransform(p, [0, 0.08], [1, 0]);
+    // Once the player is out, a nudge that there's more below: the room.
+    const onwardOpacity = useTransform(p, [0.88, 0.93], [0, 1]);
 
     return (
         <section ref={sectionRef} className="relative h-[420vh] -mt-24 mb-24">
@@ -252,6 +255,21 @@ export default function Hero() {
                     className="absolute bottom-10 text-sm font-mono uppercase tracking-widest text-gray-400"
                 >
                     Scroll ↓
+                </motion.div>
+
+                <motion.div
+                    aria-hidden
+                    style={{ opacity: onwardOpacity }}
+                    className={`${arcade.className} pointer-events-none absolute bottom-5 md:bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-2 bg-black/75 text-[8px] md:text-[10px] uppercase tracking-[0.15em] text-[#F2C14E]`}
+                >
+                    <motion.span
+                        className="inline-block mr-2"
+                        animate={reduce ? undefined : { y: [0, 3, 0] }}
+                        transition={{ duration: 0.8, repeat: Infinity }}
+                    >
+                        ▼
+                    </motion.span>
+                    Keep scrolling · enter the crib
                 </motion.div>
             </div>
         </section>

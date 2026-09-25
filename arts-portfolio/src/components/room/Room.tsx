@@ -34,6 +34,7 @@ const WALK_SPEED = 110; // room pixels per second
 const DIVE_MS = 1100;
 const ATTRACT_MS = 1500; // how long the full-screen attract screen shows before /work
 const DRAG_SLOP = 8; // px a touch moves before it counts as a swipe, not a tap
+const VISITED_KEY = 'shrma-room-visited';
 
 type Phase = 'room' | 'walking' | 'dive' | 'attract';
 
@@ -168,6 +169,35 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
     const [entered, setEntered] = useState(false);
     const [loading, setLoading] = useState(false);
     const ready = entered && !loading;
+
+    // Things visitors have already used lose their bouncing marker (remembered
+    // per browser), and a "?" card explains how to get around.
+    const [visited, setVisited] = useState<ReadonlySet<string>>(new Set());
+    useEffect(() => {
+        const id = requestAnimationFrame(() => {
+            try {
+                setVisited(new Set(JSON.parse(localStorage.getItem(VISITED_KEY) ?? '[]')));
+            } catch {}
+        });
+        return () => cancelAnimationFrame(id);
+    }, []);
+    const markVisited = useCallback((spotId: string) => {
+        setVisited((prev) => {
+            if (prev.has(spotId)) return prev;
+            const next = new Set(prev).add(spotId);
+            try {
+                localStorage.setItem(VISITED_KEY, JSON.stringify([...next]));
+            } catch {}
+            return next;
+        });
+    }, []);
+    const [helpOpen, setHelpOpen] = useState(false);
+    useEffect(() => {
+        if (!helpOpen) return;
+        const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setHelpOpen(false);
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [helpOpen]);
     // ── Third Eye.
     const ky = useMotionValue(KID_START.y);
     const kidLeft = useTransform(kx, (x) => pctX(x));
@@ -294,6 +324,8 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
     const act = useCallback(
         async (spot: Spot) => {
             if (!ready || phase === 'dive' || phase === 'attract') return;
+            markVisited(spot.id);
+            setHelpOpen(false);
             if (spot.id === 'arcade') return enterArcade();
             await walkTo(spot.stand);
             if (spot.id === 'poster' && poster) {
@@ -318,7 +350,7 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
                 say('room:records', `No record on this week. Check back soon.`, { group: 'room' });
             }
         },
-        [ready, phase, enterArcade, walkTo, say, rec, reduce, poster, router],
+        [ready, phase, enterArcade, walkTo, say, rec, reduce, poster, router, markVisited],
     );
 
     // ── Swipe to look around (phones). A drag pans the camera; a tap still
@@ -432,6 +464,18 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
                                     style={{ left: pctX(spot.box.x), top: pctY(spot.box.y), width: pctX(spot.box.w), height: pctY(spot.box.h) }}
                                 >
                                     <span className="absolute inset-0 border-2 border-dashed border-[#F2C14E] opacity-0 group-hover:opacity-80 group-focus-visible:opacity-100 transition-opacity" />
+                                    {/* Game-style marker: something to use here (until visited) */}
+                                    {ready && !visited.has(spot.id) && (
+                                        <motion.span
+                                            aria-hidden
+                                            className={`${arcade.className} pointer-events-none absolute left-1/2 -translate-x-1/2 text-[11px] md:text-sm leading-none text-[#F2C14E] [text-shadow:1px_1px_0_#000]`}
+                                            style={{ top: spot.box.y < 20 ? '28%' : '-6%' }}
+                                            animate={reduce ? undefined : { y: [0, -5, 0] }}
+                                            transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }}
+                                        >
+                                            ▼
+                                        </motion.span>
+                                    )}
                                     <span
                                         className={`${arcade.className} absolute ${labelAlign(spot)} whitespace-nowrap px-1.5 py-1 text-[9px] md:text-[10px] leading-none uppercase bg-black/80 text-[#F2C14E] opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity ${ready ? '' : '!opacity-0'} ${
                                             spot.box.y < 20 ? 'top-full mt-1' : '-top-1 -translate-y-full'
@@ -471,6 +515,63 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
                     <p className={`${arcade.className} text-[8px] md:text-[10px] uppercase tracking-[0.15em] text-[#F2C14E]`}>
                         {canPan ? 'Tap · swipe to explore' : 'Click anything · Third Eye walks you there'}
                     </p>
+                </motion.div>
+
+                {/* How to explore: a "?" button and its card */}
+                <motion.div
+                    animate={{ opacity: ready ? 1 : 0 }}
+                    className={`absolute left-4 bottom-4 md:left-6 md:bottom-6 flex flex-col items-start gap-2 ${ready ? '' : 'pointer-events-none'}`}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <AnimatePresence>
+                        {helpOpen && (
+                            <motion.div
+                                id="room-help"
+                                role="dialog"
+                                aria-label="How to explore"
+                                className="w-[min(20rem,calc(100vw-2rem))] border-2 border-[#F2C14E]/60 bg-black/85 backdrop-blur-sm p-4 text-[#E6E1D6]"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 8 }}
+                            >
+                                <p className={`${arcade.className} text-[10px] uppercase tracking-[0.15em] text-[#F2C14E]`}>How to explore</p>
+                                <p className="mt-2 text-sm leading-snug">
+                                    {canPan ? 'Tap' : 'Click'} anything with a gold <span className="text-[#F2C14E]">▼</span> and Third Eye walks you
+                                    there.
+                                </p>
+                                <ul className="mt-3 space-y-1.5 text-sm leading-snug">
+                                    <li>
+                                        <b className="font-medium text-[#F2C14E]">Arcade</b> · Avi&apos;s selected work
+                                    </li>
+                                    <li>
+                                        <b className="font-medium text-[#F2C14E]">Records</b> · his music: pick a song and put it on
+                                    </li>
+                                    {poster && (
+                                        <li>
+                                            <b className="font-medium text-[#F2C14E]">Art on the wall</b> · opens {poster.title}
+                                        </li>
+                                    )}
+                                    <li>
+                                        <b className="font-medium text-[#F2C14E]">Shelf, closet</b> · have a look around
+                                    </li>
+                                </ul>
+                                <p className="mt-3 text-xs leading-snug text-[#E6E1D6]/70">
+                                    {canPan ? 'Swipe sideways to look around. ' : ''}Tap Third Eye in the corner to hear him again. The
+                                    menu up top has Work and About.
+                                </p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                    <button
+                        type="button"
+                        onClick={() => setHelpOpen((o) => !o)}
+                        aria-expanded={helpOpen}
+                        aria-controls="room-help"
+                        aria-label={helpOpen ? 'Close how to explore' : 'How to explore'}
+                        className={`${arcade.className} w-10 h-10 flex items-center justify-center text-sm bg-black/80 text-[#F2C14E] border-2 border-[#F2C14E]/60 hover:bg-[#F2C14E] hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F2C14E]`}
+                    >
+                        {helpOpen ? '✕' : '?'}
+                    </button>
                 </motion.div>
 
                 {/* Phones: signs at the edges for what's off screen that way; tap to pan there. */}
