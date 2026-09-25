@@ -21,7 +21,7 @@ export type Spot = {
 export const SPOTS: Spot[] = [
     { id: 'closet', label: 'Closet', hint: 'Coming soon', box: { x: 10, y: 5, w: 62, h: 50 }, stand: { x: 40, y: 68 } },
     { id: 'arcade', label: 'Arcade', hint: 'Selected work', box: { x: 178, y: 1, w: 38, h: 64 }, stand: { x: 197, y: 80 } },
-    { id: 'records', label: 'Records', hint: 'Play / pause', box: { x: 8, y: 128, w: 60, h: 42 }, stand: { x: 80, y: 152 } },
+    { id: 'records', label: 'Records', hint: 'Browse the crate', box: { x: 8, y: 128, w: 60, h: 42 }, stand: { x: 80, y: 152 } },
 ];
 
 // Where he can walk.

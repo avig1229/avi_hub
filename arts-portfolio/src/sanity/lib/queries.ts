@@ -67,3 +67,9 @@ export const MUSIC_REC_QUERY = groq`*[_id == "musicRec"][0] {
   note,
   weekOf
 }`;
+
+// The room's record crate (singleton).
+export const RECORD_CRATE_QUERY = groq`*[_id == "recordCrate"][0].records[] {
+  youtubeUrl,
+  note
+}`;

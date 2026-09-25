@@ -15,6 +15,7 @@ import { arcade } from '../arcade';
 import { GuideSpot, useGuide } from '../guide/Guide';
 import { useMusicRec } from '../music/MusicRec';
 import AttractScreen from './AttractScreen';
+import Crate from './Crate';
 import Kid, { KID_SIZE } from './Kid';
 import RoomArt from './RoomArt';
 import Logo from '../Logo';
@@ -50,7 +51,8 @@ export default function Room() {
     const router = useRouter();
     const reduce = useReducedMotion();
     const { say } = useGuide();
-    const { playing, toggle, rec } = useMusicRec();
+    const { playing, rec } = useMusicRec();
+    const [crateOpen, setCrateOpen] = useState(false);
 
     const sectionRef = useRef<HTMLElement>(null);
     const roomRef = useRef<HTMLDivElement>(null);
@@ -159,8 +161,12 @@ export default function Room() {
         async (spot: Spot) => {
             if (!ready || phase === 'dive' || phase === 'attract') return;
             if (spot.id === 'arcade') return enterArcade();
-            // Play/pause inside the click itself: browsers only let a tap start audio.
-            if (spot.id === 'records' && rec) toggle();
+            // The crate opens straight away (so its play button is a direct tap,
+            // which browsers need to start audio) while he walks over.
+            if (spot.id === 'records' && rec) {
+                setCrateOpen(true);
+                say('room:crate', `Avi's crate. Every record in here says something about him.\n\nFlip through and put one on.`, { group: 'room' });
+            }
             await walkTo(spot.stand);
             if (spot.id === 'closet') {
                 say('room:closet', `The closet. Avi's still tidying it.\n\nHis favourite pieces move in here soon.`, { group: 'room' });
@@ -168,7 +174,7 @@ export default function Room() {
                 say('room:records', `No record on this week. Check back soon.`, { group: 'room' });
             }
         },
-        [ready, phase, enterArcade, walkTo, say, rec, toggle],
+        [ready, phase, enterArcade, walkTo, say, rec],
     );
 
     // Click the floor and he walks there.
@@ -244,7 +250,7 @@ export default function Room() {
                                         act(spot);
                                     }}
                                     disabled={!ready}
-                                    aria-label={`${spot.label}: ${spot.id === 'records' && rec ? (playing ? 'pause the music' : 'play the music') : spot.hint}`}
+                                    aria-label={`${spot.label}: ${spot.hint}`}
                                     className="group absolute outline-none"
                                     style={{ left: pctX(spot.box.x), top: pctY(spot.box.y), width: pctX(spot.box.w), height: pctY(spot.box.h) }}
                                 >
@@ -255,7 +261,7 @@ export default function Room() {
                                         }`}
                                     >
                                         {spot.label}
-                                        <span className="hidden sm:inline text-[#E6E1D6]/70"> · {spot.id === 'records' && rec && playing ? 'Pause' : spot.hint}</span>
+                                        <span className="hidden sm:inline text-[#E6E1D6]/70"> · {spot.hint}</span>
                                     </span>
                                 </button>
                             ))}
@@ -287,6 +293,8 @@ export default function Room() {
                     </p>
                 </motion.div>
             </motion.div>
+
+            <Crate open={crateOpen} onClose={() => setCrateOpen(false)} />
 
             {/* Full-screen attract screen once the camera is inside the cabinet */}
             {phase === 'attract' && (
