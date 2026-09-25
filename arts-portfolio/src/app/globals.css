@@ -117,3 +117,9 @@ body:has([data-guide-hide="always"]) .guide-dock {
     visibility: hidden;
   }
 }
+
+/* Third Eye's idle bounce in the room: a two-frame hop, like a 16-bit sprite. */
+@keyframes kid-bob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-6%); }
+}

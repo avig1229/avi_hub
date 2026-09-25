@@ -2,12 +2,14 @@ import { ARCADE_SCREEN, RECORD, ROOM } from './layout';
 
 // The room, drawn top-down in the 3/4 view of 16-bit RPGs: the back wall shows
 // its face, furniture shows its top and front. One unit = one room pixel.
+// Everything sits on the 240×180 floor plan; on screens wider than 4:3 the
+// floor and back wall simply carry on past it (x0/width), so the room fills
+// the screen with no frame.
 
 const C = {
     wall: '#3A3350',
     wallStripe: '#413A5A',
     wallTrim: '#2A2438',
-    wallEdge: '#1C1826',
     floor: '#6E4B34',
     floorLine: '#5A3C29',
     floorLight: '#7C583E',
@@ -59,11 +61,12 @@ const GARMENTS: [number, number, number, string, string][] = [
     [62, 6, 19, '#D9C7A8', '#B8A382'],
 ];
 
-export default function RoomArt({ playing }: { playing: boolean }) {
+export default function RoomArt({ playing, x0 = 0, width = ROOM.w }: { playing: boolean; x0?: number; width?: number }) {
     const s = ARCADE_SCREEN;
     return (
         <svg
-            viewBox={`0 0 ${ROOM.w} ${ROOM.h}`}
+            viewBox={`${x0} 0 ${width} ${ROOM.h}`}
+            preserveAspectRatio="none"
             className="absolute inset-0 w-full h-full"
             shapeRendering="crispEdges"
             aria-hidden
@@ -96,19 +99,9 @@ export default function RoomArt({ playing }: { playing: boolean }) {
             </defs>
 
             {/* Floor and walls */}
-            <rect width={ROOM.w} height={ROOM.h} fill="url(#room-planks)" />
-            <rect width={ROOM.w} height="44" fill="url(#room-wallpaper)" />
-            <Rects
-                rects={[
-                    px(0, 40, ROOM.w, 4, C.wallTrim),
-                    px(0, 44, ROOM.w, 1, C.woodDeep),
-                    px(0, 0, 6, ROOM.h, C.wallEdge),
-                    px(ROOM.w - 6, 0, 6, ROOM.h, C.wallEdge),
-                    px(0, ROOM.h - 6, ROOM.w, 6, C.wallEdge),
-                    px(6, 44, 1, ROOM.h - 50, C.wallTrim),
-                    px(ROOM.w - 7, 44, 1, ROOM.h - 50, C.wallTrim),
-                ]}
-            />
+            <rect x={x0} width={width} height={ROOM.h} fill="url(#room-planks)" />
+            <rect x={x0} width={width} height="44" fill="url(#room-wallpaper)" />
+            <Rects rects={[px(x0, 40, width, 4, C.wallTrim), px(x0, 44, width, 1, C.woodDeep)]} />
 
             {/* Window: night outside */}
             <Rects
