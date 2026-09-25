@@ -46,7 +46,7 @@ export default function LoadScreen() {
             {/* Third Eye, sprinting left to right, then out of frame */}
             <motion.div
                 aria-hidden
-                className="absolute bottom-[18%] h-[22vh] max-h-44 aspect-[16/18]"
+                className="absolute bottom-[16%] h-[30vh] max-h-60 aspect-[18/33]"
                 initial={{ left: '-20%' }}
                 animate={{ left: '112%' }}
                 transition={{ duration: reduce ? 0 : RUN_MS / 1000, ease: [0.3, 0, 0.7, 1] }}
@@ -62,9 +62,7 @@ export default function LoadScreen() {
                             transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.12 }}
                         />
                     ))}
-                <div className="w-full h-full" style={{ transform: `translateY(${step % 2 ? '-6%' : '0'})` }}>
-                    <Kid step={step} walking />
-                </div>
+                <Kid dir="E" step={step} walking />
             </motion.div>
         </motion.div>
     );

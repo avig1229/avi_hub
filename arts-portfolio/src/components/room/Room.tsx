@@ -16,7 +16,7 @@ import { arcade } from '../arcade';
 import { GuideSpot, useGuide } from '../guide/Guide';
 import { useMusicRec } from '../music/MusicRec';
 import AttractScreen from './AttractScreen';
-import Kid, { KID_SIZE } from './Kid';
+import Kid, { KID_SIZE, dirFor, type Dir } from './Kid';
 import RoomArt from './RoomArt';
 import Logo from '../Logo';
 import { ARCADE_SCREEN, FLOOR, KID_START, MARQUEE, POSTER_SPOT, ROOM, SPOTS, pctX, pctY, type Point, type Spot } from './layout';
@@ -215,7 +215,7 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
     const kidLeft = useTransform(kx, (x) => pctX(x));
     const kidTop = useTransform(ky, (y) => pctY(y));
     const [phase, setPhase] = useState<Phase>('room');
-    const [facing, setFacing] = useState(1);
+    const [dir, setDir] = useState<Dir>('S');
     const [step, setStep] = useState(0);
     const walkRef = useRef<{ stop: () => void }[]>([]);
 
@@ -241,20 +241,23 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
         };
     }, [phase]);
 
+    // Walk to `to`, facing the way he's going, then turn to `face` (by default,
+    // back towards you).
     const walkTo = useCallback(
-        (to: Point) =>
+        (to: Point, face: Dir = 'S') =>
             new Promise<void>((resolve) => {
                 walkRef.current.forEach((a) => a.stop());
                 const dx = to.x - kx.get();
                 const dy = to.y - ky.get();
                 const dist = Math.hypot(dx, dy);
-                if (Math.abs(dx) > 0.5) setFacing(dx < 0 ? -1 : 1);
+                if (dist > 0.5) setDir(dirFor(dx, dy));
                 // On phones the camera follows him.
                 const camTo = clampFocus(toWorldX(to.x));
                 if (reduce || dist < 1) {
                     kx.set(to.x);
                     ky.set(to.y);
                     focusX.set(camTo);
+                    setDir(face);
                     return resolve();
                 }
                 setPhase('walking');
@@ -267,6 +270,7 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
                     onComplete: () => {
                         setPhase((ph) => (ph === 'walking' ? 'room' : ph));
                         setStep(0);
+                        setDir(face);
                         resolve();
                     },
                 });
@@ -290,7 +294,7 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
             walkRef.current.forEach((a) => a.stop());
             kx.set(at.x);
             ky.set(at.y);
-            setFacing(1);
+            setDir('S');
             focusX.set(clampFocus(toWorldX(at.x)));
             setShown(true);
         };
@@ -359,7 +363,7 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
     }, [loading]);
 
     const enterArcade = useCallback(async () => {
-        await walkTo(SPOTS.find((s) => s.id === 'arcade')!.stand);
+        await walkTo(SPOTS.find((s) => s.id === 'arcade')!.stand, 'N');
         // Scale until the screen covers the viewport.
         const kk = mH.get() / ROOM.h || 1;
         diveTarget.current = Math.max(mW.get() / (ARCADE_SCREEN.w * kk), mH.get() / (ARCADE_SCREEN.h * kk)) * 1.04;
@@ -375,7 +379,7 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
             markVisited(spot.id);
             setHelpOpen(false);
             if (spot.id === 'arcade') return enterArcade();
-            await walkTo(spot.stand);
+            await walkTo(spot.stand, spot.face);
             if (spot.id === 'poster' && poster) {
                 router.push(`/work/${poster.slug}`);
                 return;
@@ -542,15 +546,8 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
                                 className="absolute pointer-events-none -translate-x-1/2 -translate-y-full"
                                 style={{ left: kidLeft, top: kidTop, width: pctX(KID_SIZE.w), height: pctY(KID_SIZE.h) }}
                             >
-                                <span className="absolute left-[18%] right-[18%] -bottom-[3%] h-[7%] rounded-[50%] bg-black/35" />
-                                <div
-                                    className="relative w-full h-full"
-                                    style={{
-                                        transform: `scaleX(${facing}) translateY(${phase === 'walking' && step % 2 ? '-5%' : '0'})`,
-                                    }}
-                                >
-                                    <Kid step={step} walking={phase === 'walking'} />
-                                </div>
+                                <span className="absolute left-[14%] right-[14%] -bottom-[2%] h-[5%] rounded-[50%] bg-black/30" />
+                                <Kid dir={dir} step={step} walking={phase === 'walking'} />
                             </motion.div>
                         </div>
                     </motion.div>

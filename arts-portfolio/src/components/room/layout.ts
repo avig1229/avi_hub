@@ -14,19 +14,21 @@ export type Spot = {
     hint: string;
     // Clickable area.
     box: Rect;
-    // Where Third Eye stands (his feet) when he walks over.
+    // Where Third Eye stands (his feet) when he walks over, and which way he
+    // then faces (N: towards the back wall).
     stand: Point;
+    face: 'N' | 'W' | 'E' | 'S';
 };
 
 export const SPOTS: Spot[] = [
-    { id: 'closet', label: 'Closet', hint: 'Coming soon', box: { x: 10, y: 5, w: 62, h: 50 }, stand: { x: 40, y: 68 } },
-    { id: 'arcade', label: 'Arcade', hint: 'Selected work', box: { x: 178, y: 1, w: 38, h: 64 }, stand: { x: 197, y: 80 } },
-    { id: 'shelf', label: 'Shelf', hint: 'F1 & manga', box: { x: 141, y: 9, w: 38, h: 30 }, stand: { x: 160, y: 68 } },
-    { id: 'records', label: 'Records', hint: 'Play records', box: { x: 8, y: 128, w: 60, h: 42 }, stand: { x: 80, y: 152 } },
+    { id: 'closet', label: 'Closet', hint: 'Coming soon', box: { x: 10, y: 5, w: 62, h: 50 }, stand: { x: 40, y: 68 }, face: 'N' },
+    { id: 'arcade', label: 'Arcade', hint: 'Selected work', box: { x: 178, y: 1, w: 38, h: 64 }, stand: { x: 197, y: 80 }, face: 'N' },
+    { id: 'shelf', label: 'Shelf', hint: 'F1 & manga', box: { x: 141, y: 9, w: 38, h: 30 }, stand: { x: 160, y: 68 }, face: 'N' },
+    { id: 'records', label: 'Records', hint: 'Play records', box: { x: 8, y: 128, w: 60, h: 42 }, stand: { x: 80, y: 152 }, face: 'W' },
 ];
 
 // The framed art piece on the wall; its label is the piece's project title.
-export const POSTER_SPOT: Spot = { id: 'poster', label: 'Art', hint: 'Open the project', box: { x: 74, y: 6, w: 24, h: 31 }, stand: { x: 86, y: 66 } };
+export const POSTER_SPOT: Spot = { id: 'poster', label: 'Art', hint: 'Open the project', box: { x: 74, y: 6, w: 24, h: 31 }, stand: { x: 86, y: 66 }, face: 'N' };
 
 // Where he can walk.
 export const FLOOR: Rect = { x: 16, y: 56, w: 208, h: 114 };
