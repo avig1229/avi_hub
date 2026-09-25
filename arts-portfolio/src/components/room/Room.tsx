@@ -35,6 +35,8 @@ const DIVE_MS = 1100;
 const ATTRACT_MS = 1500; // how long the full-screen attract screen shows before /work
 const DRAG_SLOP = 8; // px a touch moves before it counts as a swipe, not a tap
 const VISITED_KEY = 'shrma-room-visited';
+const LOADED_KEY = 'shrma-crib-loaded'; // the full loading screen plays once per visit
+const IRIS_MS = 450;
 
 type Phase = 'room' | 'walking' | 'dive' | 'attract';
 
@@ -167,8 +169,18 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
     // screen (Third Eye runs across), settles the page on the room, then he
     // walks in from the left. Scrolling back up into the hero resets it.
     const [entered, setEntered] = useState(false);
-    const [loading, setLoading] = useState(false);
+    // 'load': the full loading screen (first entry per visit); 'iris': the
+    // circle closing and reopening on him, like a Mario level transition.
+    const [transition, setTransition] = useState<'none' | 'load' | 'iris'>('none');
+    const loading = transition !== 'none';
     const ready = entered && !loading;
+    const irisR = useMotionValue(0);
+    const irisX = useMotionValue(0);
+    const irisY = useMotionValue(0);
+    const irisMask = useTransform(
+        () => `radial-gradient(circle at ${irisX.get()}px ${irisY.get()}px, transparent ${irisR.get()}px, #000 ${irisR.get() + 1}px)`,
+    );
+    const kidRef = useRef<HTMLDivElement>(null);
 
     // Things visitors have already used lose their bouncing marker (remembered
     // per browser), and a "?" card explains how to get around.
@@ -263,25 +275,55 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
         [kx, ky, reduce, focusX, clampFocus, toWorldX],
     );
 
-    const enter = useCallback(() => {
+    const enter = useCallback(async () => {
         setEntered(true);
-        setLoading(true);
-        // Under the loading screen: settle on the room, him at the left edge.
-        const view = document.getElementById('room-view');
-        if (view) window.scrollTo({ top: view.getBoundingClientRect().top + window.scrollY, behavior: 'instant' });
-        walkRef.current.forEach((a) => a.stop());
-        kx.set(FLOOR.x);
-        ky.set(KID_START.y);
-        setFacing(1);
-        focusX.set(clampFocus(toWorldX(FLOOR.x)));
-        window.setTimeout(
-            () => {
-                setLoading(false);
-                walkTo(KID_START);
-            },
-            reduce ? 350 : RUN_MS + 150,
-        );
-    }, [kx, ky, focusX, clampFocus, toWorldX, walkTo, reduce]);
+        let firstTime = true;
+        try {
+            firstTime = !sessionStorage.getItem(LOADED_KEY);
+            sessionStorage.setItem(LOADED_KEY, '1');
+        } catch {}
+
+        // Settle on the room with him at the left edge (under the cover).
+        const settle = () => {
+            const view = document.getElementById('room-view');
+            if (view) window.scrollTo({ top: view.getBoundingClientRect().top + window.scrollY, behavior: 'instant' });
+            walkRef.current.forEach((a) => a.stop());
+            kx.set(FLOOR.x);
+            ky.set(KID_START.y);
+            setFacing(1);
+            focusX.set(clampFocus(toWorldX(FLOOR.x)));
+        };
+        const walkIn = () => {
+            setTransition('none');
+            walkTo(KID_START);
+        };
+
+        if (firstTime || reduce) {
+            setTransition('load');
+            settle();
+            window.setTimeout(walkIn, reduce ? 350 : RUN_MS + 150);
+            return;
+        }
+
+        // The iris: close to black on the middle of the screen, settle, then
+        // open again on Third Eye.
+        const maxR = Math.hypot(window.innerWidth, window.innerHeight);
+        irisX.set(window.innerWidth / 2);
+        irisY.set(window.innerHeight / 2);
+        irisR.set(maxR);
+        setTransition('iris');
+        await animate(irisR, 0, { duration: IRIS_MS / 1000, ease: [0.5, 0, 0.9, 0.5] });
+        settle();
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const kid = kidRef.current?.getBoundingClientRect();
+        if (kid) {
+            irisX.set(kid.left + kid.width / 2);
+            irisY.set(kid.top + kid.height / 2);
+        }
+        await new Promise((r) => window.setTimeout(r, 120));
+        await animate(irisR, maxR, { duration: (IRIS_MS + 150) / 1000, ease: [0.2, 0.6, 0.4, 1] });
+        walkIn();
+    }, [kx, ky, focusX, clampFocus, toWorldX, walkTo, reduce, irisR, irisX, irisY]);
 
     useMotionValueEvent(p, 'change', (v) => {
         if (v < 0.01) {
@@ -489,6 +531,7 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
 
                             {/* Third Eye, anchored at his feet */}
                             <motion.div
+                                ref={kidRef}
                                 aria-hidden
                                 className="absolute pointer-events-none -translate-x-1/2 -translate-y-full"
                                 style={{ left: kidLeft, top: kidTop, width: pctX(KID_SIZE.w), height: pctY(KID_SIZE.h) }}
@@ -602,7 +645,14 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
                     )}
             </motion.div>
 
-            <AnimatePresence>{loading && <LoadScreen />}</AnimatePresence>
+            <AnimatePresence>{transition === 'load' && <LoadScreen />}</AnimatePresence>
+            {transition === 'iris' && (
+                <motion.div
+                    aria-hidden
+                    className="fixed inset-0 z-[46] bg-black pointer-events-auto"
+                    style={{ maskImage: irisMask, WebkitMaskImage: irisMask }}
+                />
+            )}
 
             {/* Full-screen attract screen once the camera is inside the cabinet */}
             {phase === 'attract' && (
