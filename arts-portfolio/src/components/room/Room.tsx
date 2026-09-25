@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
+    AnimatePresence,
     animate,
     motion,
     useMotionValue,
@@ -18,21 +19,24 @@ import AttractScreen from './AttractScreen';
 import Kid, { KID_SIZE } from './Kid';
 import RoomArt from './RoomArt';
 import Logo from '../Logo';
-import { ARCADE_SCREEN, FLOOR, KID_START, MARQUEE, RECORD, ROOM, SPOTS, pctX, pctY, type Point, type Spot } from './layout';
+import { ARCADE_SCREEN, FLOOR, KID_START, MARQUEE, POSTER_SPOT, ROOM, SPOTS, pctX, pctY, type Point, type Spot } from './layout';
+import LoadScreen, { RUN_MS } from './LoadScreen';
 
-// Avi's room, the landing page's second act, full screen. It fades in right on
-// the turntable's record (carrying on from the hero's record) and zooms out to
-// the whole room as you scroll. The room always fills the screen's height: on
+// Avi's room, the landing page's second act, full screen. Scrolling on from
+// the hero plays a loading screen (Third Eye running across), then he walks
+// into the room. The room always fills the screen's height: on
 // wide screens the floor carries on past it; on narrow ones (phones) the camera
 // pans, following Third Eye, and you can swipe to look around. Third Eye walks
 // you to whatever you click; the arcade dives into its screen and opens the
 // Selected Work select screen.
 
-const ZOOM_START = 7; // how far in the camera starts, on the record
 const WALK_SPEED = 110; // room pixels per second
 const DIVE_MS = 1100;
 const ATTRACT_MS = 1500; // how long the full-screen attract screen shows before /work
 const DRAG_SLOP = 8; // px a touch moves before it counts as a swipe, not a tap
+const VISITED_KEY = 'shrma-room-visited';
+const LOADED_KEY = 'shrma-crib-loaded'; // the full loading screen plays once per visit
+const IRIS_MS = 450;
 
 type Phase = 'room' | 'walking' | 'dive' | 'attract';
 
@@ -46,11 +50,15 @@ const labelAlign = (spot: Spot) => {
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-export default function Room() {
+// The art piece framed on the wall, and the project it opens.
+export type RoomPoster = { title: string; slug: string; src: string };
+
+export default function Room({ poster }: { poster?: RoomPoster | null }) {
     const router = useRouter();
     const reduce = useReducedMotion();
     const { say } = useGuide();
     const { playing, rec } = useMusicRec();
+    const spots = useMemo(() => (poster ? [...SPOTS, { ...POSTER_SPOT, label: poster.title }] : SPOTS), [poster]);
 
     const sectionRef = useRef<HTMLElement>(null);
     const stageRef = useRef<HTMLDivElement>(null);
@@ -100,31 +108,26 @@ export default function Room() {
         [mW, mH],
     );
 
-    // ── Camera. `focusX` is the world point at the middle of the screen when
-    // zoomed all the way out (only moves on phones); the scroll zoom pulls the
-    // focus to the record, the dive pulls it to the arcade screen.
+    // ── Camera. `focusX` is the world point at the middle of the screen (only
+    // moves on phones, following Third Eye); the dive pulls it to the arcade
+    // screen. On resize it re-centres on wherever he is.
     const focusX = useMotionValue(0);
+    const kx = useMotionValue(FLOOR.x);
     useEffect(() => {
-        focusX.set(clampFocus(toWorldX(KID_START.x)));
-    }, [dims, focusX, clampFocus, toWorldX]);
+        focusX.set(clampFocus(toWorldX(kx.get())));
+    }, [dims, focusX, kx, clampFocus, toWorldX]);
 
-    const out = useTransform(p, [0.04, 0.55], [0, 1], { clamp: true });
-    // Evenly in log space, so the zoom feels steady rather than rushing at the end.
-    const zoom = useTransform(out, (t) => Math.pow(ZOOM_START, 1 - t));
     const dive = useMotionValue(0);
     const diveTarget = useRef(8);
 
-    const camScale = useTransform(() => zoom.get() * (1 + (diveTarget.current - 1) * dive.get()));
+    const camScale = useTransform(() => 1 + (diveTarget.current - 1) * dive.get());
     const camFocus = () => {
         const kk = mH.get() / ROOM.h || 1;
-        const f = (zoom.get() - 1) / (ZOOM_START - 1); // 1 on the record, 0 zoomed out
         const d = dive.get();
-        const rx = toWorldX(RECORD.x);
-        const ry = RECORD.y * kk;
         const sx = toWorldX(ARCADE_SCREEN.x + ARCADE_SCREEN.w / 2);
         const sy = (ARCADE_SCREEN.y + ARCADE_SCREEN.h / 2) * kk;
-        const x0 = focusX.get() + (rx - focusX.get()) * f;
-        const y0 = mH.get() / 2 + (ry - mH.get() / 2) * f;
+        const x0 = focusX.get();
+        const y0 = mH.get() / 2;
         return { x: x0 + (sx - x0) * d, y: y0 + (sy - y0) * d };
     };
     const camX = useTransform(() => mW.get() / 2 - camFocus().x * camScale.get());
@@ -137,7 +140,7 @@ export default function Room() {
         const fx = focusX.get();
         const left: Spot[] = [];
         const right: Spot[] = [];
-        for (const spot of SPOTS) {
+        for (const spot of spots) {
             const c = toWorldX(spot.box.x + spot.box.w / 2);
             if (c < fx - half + 12) left.push(spot);
             else if (c > fx + half - 12) right.push(spot);
@@ -148,7 +151,7 @@ export default function Room() {
                 ? prev
                 : { left, right },
         );
-    }, [mW, focusX, toWorldX]);
+    }, [mW, focusX, toWorldX, spots]);
     useMotionValueEvent(focusX, 'change', updateOffscreen);
     useEffect(() => {
         const id = requestAnimationFrame(updateOffscreen);
@@ -157,22 +160,57 @@ export default function Room() {
     const panTo = (spot: Spot) =>
         animate(focusX, clampFocus(toWorldX(spot.box.x + spot.box.w / 2)), reduce ? { duration: 0 } : { duration: 0.6, ease: 'easeInOut' });
 
-    const fadeIn = useTransform(p, [0, 0.05], [0, 1]);
-    // The room starts one screen early, over the hero's last frame; until it has
-    // faded in it must not catch taps meant for the hero's record player.
-    const stageEvents = useTransform(fadeIn, (v) => (v > 0.9 ? 'auto' : 'none'));
-    const hintOpacity = useTransform(p, [0.5, 0.6], [0, 1]);
-    // Clickable once the camera is (nearly) all the way out. Checked on mount
-    // too: arriving via #room-view or the back button lands there with no scroll.
-    const [ready, setReady] = useState(false);
-    useMotionValueEvent(out, 'change', (v) => setReady(v > 0.92));
-    useEffect(() => {
-        const id = requestAnimationFrame(() => setReady(out.get() > 0.92));
-        return () => cancelAnimationFrame(id);
-    }, [out]);
+    // The room starts one screen early, over the hero's last frame. It stays
+    // hidden (and lets taps through to the hero) until a transition has
+    // covered the screen and settled on it, so the cut is never seen.
+    const [shown, setShown] = useState(false);
 
+    // ── Entering: crossing from the hero into the room plays the loading
+    // screen (Third Eye runs across), settles the page on the room, then he
+    // walks in from the left. Scrolling back up into the hero resets it.
+    const [entered, setEntered] = useState(false);
+    // 'load': the full loading screen (first entry per visit); 'iris': the
+    // circle closing and reopening on him, like a Mario level transition.
+    const [transition, setTransition] = useState<'none' | 'load' | 'iris'>('none');
+    const loading = transition !== 'none';
+    const ready = entered && !loading;
+    const irisR = useMotionValue(0);
+    const irisX = useMotionValue(0);
+    const irisY = useMotionValue(0);
+    const irisMask = useTransform(
+        () => `radial-gradient(circle at ${irisX.get()}px ${irisY.get()}px, transparent ${irisR.get()}px, #000 ${irisR.get() + 1}px)`,
+    );
+    const kidRef = useRef<HTMLDivElement>(null);
+
+    // Things visitors have already used lose their bouncing marker (remembered
+    // per browser), and a "?" card explains how to get around.
+    const [visited, setVisited] = useState<ReadonlySet<string>>(new Set());
+    useEffect(() => {
+        const id = requestAnimationFrame(() => {
+            try {
+                setVisited(new Set(JSON.parse(localStorage.getItem(VISITED_KEY) ?? '[]')));
+            } catch {}
+        });
+        return () => cancelAnimationFrame(id);
+    }, []);
+    const markVisited = useCallback((spotId: string) => {
+        setVisited((prev) => {
+            if (prev.has(spotId)) return prev;
+            const next = new Set(prev).add(spotId);
+            try {
+                localStorage.setItem(VISITED_KEY, JSON.stringify([...next]));
+            } catch {}
+            return next;
+        });
+    }, []);
+    const [helpOpen, setHelpOpen] = useState(false);
+    useEffect(() => {
+        if (!helpOpen) return;
+        const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setHelpOpen(false);
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [helpOpen]);
     // ── Third Eye.
-    const kx = useMotionValue(KID_START.x);
     const ky = useMotionValue(KID_START.y);
     const kidLeft = useTransform(kx, (x) => pctX(x));
     const kidTop = useTransform(ky, (y) => pctY(y));
@@ -237,6 +275,89 @@ export default function Room() {
         [kx, ky, reduce, focusX, clampFocus, toWorldX],
     );
 
+    const enter = useCallback(async () => {
+        setEntered(true);
+        let firstTime = true;
+        try {
+            firstTime = !sessionStorage.getItem(LOADED_KEY);
+            sessionStorage.setItem(LOADED_KEY, '1');
+        } catch {}
+
+        // Settle on the room (under the cover), with him at `at`.
+        const settle = (at: Point) => {
+            const view = document.getElementById('room-view');
+            if (view) window.scrollTo({ top: view.getBoundingClientRect().top + window.scrollY, behavior: 'instant' });
+            walkRef.current.forEach((a) => a.stop());
+            kx.set(at.x);
+            ky.set(at.y);
+            setFacing(1);
+            focusX.set(clampFocus(toWorldX(at.x)));
+            setShown(true);
+        };
+        const walkIn = () => {
+            setTransition('none');
+            walkTo(KID_START);
+        };
+
+        if (firstTime || reduce) {
+            setTransition('load');
+            // He walks in from the left edge once the loading screen lifts.
+            settle({ x: FLOOR.x, y: KID_START.y });
+            window.setTimeout(walkIn, reduce ? 350 : RUN_MS + 150);
+            return;
+        }
+
+        // The iris: close to black on the middle of the screen (still the hero),
+        // hold a beat, settle on the room, then open again on Third Eye, who is
+        // already standing on the rug.
+        const maxR = Math.hypot(window.innerWidth, window.innerHeight);
+        irisX.set(window.innerWidth / 2);
+        irisY.set(window.innerHeight / 2);
+        irisR.set(maxR);
+        setTransition('iris');
+        await animate(irisR, 0, { duration: IRIS_MS / 1000, ease: [0.5, 0, 0.9, 0.5] });
+        settle(KID_START);
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const kid = kidRef.current?.getBoundingClientRect();
+        if (kid) {
+            irisX.set(kid.left + kid.width / 2);
+            irisY.set(kid.top + kid.height / 2);
+        }
+        await new Promise((r) => window.setTimeout(r, 180));
+        await animate(irisR, maxR, { duration: (IRIS_MS + 150) / 1000, ease: [0.2, 0.6, 0.4, 1] });
+        setTransition('none');
+    }, [kx, ky, focusX, clampFocus, toWorldX, walkTo, reduce, irisR, irisX, irisY]);
+
+    useMotionValueEvent(p, 'change', (v) => {
+        if (v < 0.01) {
+            if (entered && !loading) {
+                setEntered(false);
+                setShown(false);
+            }
+        } else if (!entered && v > 0.02 && v < 0.95) enter();
+    });
+    // Arriving already in the room (the back button, "back to the room").
+    useEffect(() => {
+        const id = requestAnimationFrame(() => {
+            const v = p.get();
+            if (v > 0.02 && v < 0.95) enter();
+        });
+        return () => cancelAnimationFrame(id);
+        // Only on mount.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    // Hold the page still while the loading screen plays.
+    useEffect(() => {
+        if (!loading) return;
+        const html = document.documentElement;
+        const prev = html.style.overflow;
+        html.style.overflow = 'hidden';
+        return () => {
+            html.style.overflow = prev;
+        };
+    }, [loading]);
+
     const enterArcade = useCallback(async () => {
         await walkTo(SPOTS.find((s) => s.id === 'arcade')!.stand);
         // Scale until the screen covers the viewport.
@@ -251,14 +372,24 @@ export default function Room() {
     const act = useCallback(
         async (spot: Spot) => {
             if (!ready || phase === 'dive' || phase === 'attract') return;
+            markVisited(spot.id);
+            setHelpOpen(false);
             if (spot.id === 'arcade') return enterArcade();
             await walkTo(spot.stand);
+            if (spot.id === 'poster' && poster) {
+                router.push(`/work/${poster.slug}`);
+                return;
+            }
             // The record corner takes you back to the one record player: the
-            // camera zooms into the turntable and lands on the hero's record,
-            // with the weekly rec and the crate beside it.
+            // page scrolls back up to the hero's record, with the weekly rec
+            // and the crate beside it.
             if (spot.id === 'records' && rec) {
                 say('room:crate', `Avi's records. Every one in the crate says something about him.\n\nPick one and put it on.`, { group: 'room' });
                 document.getElementById('record-player')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+                return;
+            }
+            if (spot.id === 'shelf') {
+                say('room:shelf', `Avi's shelf. A model F1 car up top, his favourite manga underneath.\n\nThe lights are the best part, honestly.`, { group: 'room' });
                 return;
             }
             if (spot.id === 'closet') {
@@ -267,7 +398,7 @@ export default function Room() {
                 say('room:records', `No record on this week. Check back soon.`, { group: 'room' });
             }
         },
-        [ready, phase, enterArcade, walkTo, say, rec, reduce],
+        [ready, phase, enterArcade, walkTo, say, rec, reduce, poster, router, markVisited],
     );
 
     // ── Swipe to look around (phones). A drag pans the camera; a tap still
@@ -314,19 +445,19 @@ export default function Room() {
             id="room"
             ref={sectionRef}
             aria-label="Avi's room"
-            // Starts one screen early so it fades in over the hero's last frame.
+            // Starts one screen early, over the hero's last frame; the loading screen covers the cut.
             // Taps pass through the section itself: it overlaps the hero's last frame.
-            className="relative h-[260vh] -mt-[calc(100svh+6rem)] -mx-6 md:-mx-12 pointer-events-none"
+            className="relative h-[200vh] -mt-[calc(100svh+6rem)] -mx-6 md:-mx-12 pointer-events-none"
         >
-            {/* Anchor for "back to the room" links: the fully zoomed-out view. */}
-            <div id="room-view" className="absolute left-0 top-[62%] h-px w-px" aria-hidden />
+            {/* Anchor for "back to the room" links, and where entering settles the page. */}
+            <div id="room-view" className="absolute left-0 top-[20%] h-px w-px" aria-hidden />
             {/* Third Eye stays tucked away through the hero and introduces himself once the room is in view. */}
             <GuideSpot id="home" siteKey="home" revealsGuide className="absolute left-0 top-[40%]" />
 
             <motion.div
                 ref={stageRef}
-                style={{ opacity: fadeIn, pointerEvents: stageEvents }}
-                className="sticky top-0 h-svh overflow-hidden bg-[#3A3350] select-none touch-pan-y"
+                style={{ opacity: shown ? 1 : 0, pointerEvents: shown ? 'auto' : 'none' }}
+                className="sticky top-0 h-svh overflow-hidden bg-[#E8E2D8] select-none touch-pan-y"
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
@@ -339,7 +470,7 @@ export default function Room() {
                         style={{ width: worldW, height: dims.H, x: camX, y: camY, scale: camScale, transformOrigin: '0 0' }}
                         onClick={onFloor}
                     >
-                        <RoomArt playing={playing} x0={-boxLeft / k} width={worldW / k} />
+                        <RoomArt playing={playing} x0={-boxLeft / k} width={worldW / k} poster={poster?.src} />
 
                         {/* The 240×180 floor plan: everything clickable lives here. */}
                         <div ref={boxRef} className="absolute top-0" style={{ left: boxLeft, width: ROOM.w * k, height: dims.H }}>
@@ -367,7 +498,7 @@ export default function Room() {
                             </div>
 
                             {/* Hotspots */}
-                            {SPOTS.map((spot) => (
+                            {spots.map((spot) => (
                                 <button
                                     key={spot.id}
                                     type="button"
@@ -381,6 +512,18 @@ export default function Room() {
                                     style={{ left: pctX(spot.box.x), top: pctY(spot.box.y), width: pctX(spot.box.w), height: pctY(spot.box.h) }}
                                 >
                                     <span className="absolute inset-0 border-2 border-dashed border-[#F2C14E] opacity-0 group-hover:opacity-80 group-focus-visible:opacity-100 transition-opacity" />
+                                    {/* Game-style marker: something to use here (until visited) */}
+                                    {ready && !visited.has(spot.id) && (
+                                        <motion.span
+                                            aria-hidden
+                                            className={`${arcade.className} pointer-events-none absolute left-1/2 -translate-x-1/2 text-[11px] md:text-sm leading-none text-[#F2C14E] [text-shadow:1px_1px_0_#000]`}
+                                            style={{ top: spot.box.y < 20 ? '28%' : '-6%' }}
+                                            animate={reduce ? undefined : { y: [0, -5, 0] }}
+                                            transition={{ duration: 0.9, repeat: Infinity, ease: 'easeInOut' }}
+                                        >
+                                            ▼
+                                        </motion.span>
+                                    )}
                                     <span
                                         className={`${arcade.className} absolute ${labelAlign(spot)} whitespace-nowrap px-1.5 py-1 text-[9px] md:text-[10px] leading-none uppercase bg-black/80 text-[#F2C14E] opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity ${ready ? '' : '!opacity-0'} ${
                                             spot.box.y < 20 ? 'top-full mt-1' : '-top-1 -translate-y-full'
@@ -394,6 +537,7 @@ export default function Room() {
 
                             {/* Third Eye, anchored at his feet */}
                             <motion.div
+                                ref={kidRef}
                                 aria-hidden
                                 className="absolute pointer-events-none -translate-x-1/2 -translate-y-full"
                                 style={{ left: kidLeft, top: kidTop, width: pctX(KID_SIZE.w), height: pctY(KID_SIZE.h) }}
@@ -414,12 +558,69 @@ export default function Room() {
 
                 {/* How to play, over the floor */}
                 <motion.div
-                    style={{ opacity: hintOpacity }}
+                    animate={{ opacity: ready ? 1 : 0 }}
                     className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-5 md:bottom-7 px-3 py-2 bg-black/70 text-center whitespace-nowrap"
                 >
                     <p className={`${arcade.className} text-[8px] md:text-[10px] uppercase tracking-[0.15em] text-[#F2C14E]`}>
                         {canPan ? 'Tap · swipe to explore' : 'Click anything · Third Eye walks you there'}
                     </p>
+                </motion.div>
+
+                {/* How to explore: a "?" button and its card */}
+                <motion.div
+                    animate={{ opacity: ready ? 1 : 0 }}
+                    className={`absolute left-4 bottom-4 md:left-6 md:bottom-6 flex flex-col items-start gap-2 ${ready ? '' : 'pointer-events-none'}`}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <AnimatePresence>
+                        {helpOpen && (
+                            <motion.div
+                                id="room-help"
+                                role="dialog"
+                                aria-label="How to explore"
+                                className="w-[min(20rem,calc(100vw-2rem))] border-2 border-[#F2C14E]/60 bg-black/85 backdrop-blur-sm p-4 text-[#E6E1D6]"
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: 8 }}
+                            >
+                                <p className={`${arcade.className} text-[10px] uppercase tracking-[0.15em] text-[#F2C14E]`}>How to explore</p>
+                                <p className="mt-2 text-sm leading-snug">
+                                    {canPan ? 'Tap' : 'Click'} anything with a gold <span className="text-[#F2C14E]">▼</span> and Third Eye walks you
+                                    there.
+                                </p>
+                                <ul className="mt-3 space-y-1.5 text-sm leading-snug">
+                                    <li>
+                                        <b className="font-medium text-[#F2C14E]">Arcade</b> · Avi&apos;s selected work
+                                    </li>
+                                    <li>
+                                        <b className="font-medium text-[#F2C14E]">Records</b> · his music: pick a song and put it on
+                                    </li>
+                                    {poster && (
+                                        <li>
+                                            <b className="font-medium text-[#F2C14E]">Art on the wall</b> · opens {poster.title}
+                                        </li>
+                                    )}
+                                    <li>
+                                        <b className="font-medium text-[#F2C14E]">Shelf, closet</b> · have a look around
+                                    </li>
+                                </ul>
+                                <p className="mt-3 text-xs leading-snug text-[#E6E1D6]/70">
+                                    {canPan ? 'Swipe sideways to look around. ' : ''}Tap Third Eye in the corner to hear him again. The
+                                    menu up top has Work and About.
+                                </p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                    <button
+                        type="button"
+                        onClick={() => setHelpOpen((o) => !o)}
+                        aria-expanded={helpOpen}
+                        aria-controls="room-help"
+                        aria-label={helpOpen ? 'Close how to explore' : 'How to explore'}
+                        className={`${arcade.className} w-10 h-10 flex items-center justify-center text-sm bg-black/80 text-[#F2C14E] border-2 border-[#F2C14E]/60 hover:bg-[#F2C14E] hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F2C14E]`}
+                    >
+                        {helpOpen ? '✕' : '?'}
+                    </button>
                 </motion.div>
 
                 {/* Phones: signs at the edges for what's off screen that way; tap to pan there. */}
@@ -428,7 +629,7 @@ export default function Room() {
                         offscreen[side].length ? (
                             <motion.div
                                 key={side}
-                                style={{ opacity: hintOpacity }}
+                                animate={{ opacity: ready ? 1 : 0 }}
                                 className={`absolute top-1/2 -translate-y-1/2 flex flex-col gap-1.5 ${side === 'left' ? 'left-2 items-start' : 'right-2 items-end'} ${ready ? '' : 'pointer-events-none'}`}
                             >
                                 {offscreen[side].map((spot) => (
@@ -449,6 +650,15 @@ export default function Room() {
                         ) : null,
                     )}
             </motion.div>
+
+            <AnimatePresence>{transition === 'load' && <LoadScreen />}</AnimatePresence>
+            {transition === 'iris' && (
+                <motion.div
+                    aria-hidden
+                    className="fixed inset-0 z-[46] bg-black pointer-events-auto"
+                    style={{ maskImage: irisMask, WebkitMaskImage: irisMask }}
+                />
+            )}
 
             {/* Full-screen attract screen once the camera is inside the cabinet */}
             {phase === 'attract' && (

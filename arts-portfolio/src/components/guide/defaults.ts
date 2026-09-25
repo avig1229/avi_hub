@@ -12,7 +12,7 @@ export type SiteGuideLines = {
 
 export const SITE_GUIDE_DEFAULTS: SiteGuideLines = {
     name: 'Third Eye',
-    home: `Oh! A visitor.\n\nWelcome to Avi's room. I'm Third Eye, I'll show you around.\n\nClick anything and I'll walk you over. His work's in the arcade.`,
+    home: `Oh! A visitor.\n\nWelcome to the crib. I'm Third Eye, I'll show you around.\n\nSee the little gold arrows? Click one and I'll walk you over. His work's in the arcade, his music's on the records.\n\nLost? Hit the ? button, or tap me.`,
     about: `This is Avi. Tech, design, fashion: I keep an eye on all three.`,
     typeNotes: `Psst. Type nerds, this part's for you.\n\nTry typing your name in the box below.`,
     idle: `Still here. Keep exploring and I'll chime in when there's a story.`,

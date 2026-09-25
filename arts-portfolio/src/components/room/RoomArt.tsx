@@ -7,19 +7,22 @@ import { ARCADE_SCREEN, RECORD, ROOM } from './layout';
 // the screen with no frame.
 
 const C = {
-    wall: '#3A3350',
-    wallStripe: '#413A5A',
-    wallTrim: '#2A2438',
-    floor: '#6E4B34',
-    floorLine: '#5A3C29',
-    floorLight: '#7C583E',
+    // A modern interior: warm plaster walls, light oak floor, walnut and matte black.
+    wall: '#E8E2D8',
+    wallShade: '#DDD5C8',
+    wallTrim: '#F7F4EE', // baseboard
+    wallTrimShadow: '#CFC6B8',
+    floor: '#C9A27B',
+    floorLine: '#B38B63',
+    floorLight: '#CFAA84',
     rug: '#2B3A8C',
     rugEdge: '#1D275F',
     stitch: '#D9D2C3',
-    wood: '#A0714C',
-    woodDark: '#7A553A',
-    woodDeep: '#5A3C29',
+    wood: '#7B5238', // walnut
+    woodDark: '#5E3D2A',
+    woodDeep: '#3E281C',
     metal: '#9AA0A8',
+    steel: '#2B2B30', // matte black: window frame, rail, poster frame
     cream: '#E6E1D6',
     ink: '#121212',
     cabinet: '#1B1826',
@@ -32,9 +35,10 @@ const C = {
     magenta: '#C2307A',
     purple: '#6B2A8C',
     gold: '#F2C14E',
-    leaf: '#3F8F4E',
-    leafDark: '#2E6B3A',
-    pot: '#B5563A',
+    leaf: '#4E9A5A',
+    leafDark: '#2F6E3E',
+    pot: '#EDEAE4',
+    potShade: '#D6D2CA',
 };
 
 type R = { x: number; y: number; w: number; h: number; c: string };
@@ -50,10 +54,32 @@ function Rects({ rects }: { rects: R[] }) {
     );
 }
 
+// The model F1 car on the shelf, one character per pixel.
+const F1_COLOURS: Record<string, string> = { r: '#D72E2E', R: '#A81F1F', k: '#1B1B1B', w: '#F0F0F0', y: '#F2C14E', t: '#111111' };
+const F1_CAR = [
+    '.............kk.',
+    '.......yk.....k.',
+    '..rrrrrrrrrrrrR.',
+    'kkrrwwwrrrrrrRR.',
+    '.tt.........tt..',
+];
+
+// Manga volumes on the shelf: [spine colour, height].
+const MANGA: [string, number][] = [
+    ['#E4572E', 7],
+    ['#F2C14E', 7],
+    ['#2B3A8C', 8],
+    ['#1B1B1B', 7],
+    ['#4E9A5A', 7],
+    ['#8C5A9E', 8],
+    ['#C2307A', 7],
+    ['#3B6BFF', 7],
+];
+
 // Garments on the closet rail: [x, width, length, colour, detail colour].
 const GARMENTS: [number, number, number, string, string][] = [
     [15, 8, 26, '#E8B64A', '#C9962F'], // the yee-haw hoodie
-    [24, 7, 22, '#EDE7DA', '#2B3A8C'], // 'THE' jersey
+    [24, 7, 22, '#C9D3E0', '#2B3A8C'], // 'THE' jersey
     [32, 7, 28, '#2B3A8C', '#D9D2C3'], // sashiko jacket
     [40, 6, 20, '#C8453B', '#9E3029'],
     [47, 7, 25, '#1B1B22', '#3A3A44'],
@@ -61,7 +87,18 @@ const GARMENTS: [number, number, number, string, string][] = [
     [62, 6, 19, '#D9C7A8', '#B8A382'],
 ];
 
-export default function RoomArt({ playing, x0 = 0, width = ROOM.w }: { playing: boolean; x0?: number; width?: number }) {
+export default function RoomArt({
+    playing,
+    x0 = 0,
+    width = ROOM.w,
+    poster,
+}: {
+    playing: boolean;
+    x0?: number;
+    width?: number;
+    // The art piece on the wall.
+    poster?: string;
+}) {
     const s = ARCADE_SCREEN;
     return (
         <svg
@@ -72,18 +109,21 @@ export default function RoomArt({ playing, x0 = 0, width = ROOM.w }: { playing: 
             aria-hidden
         >
             <defs>
-                <pattern id="room-planks" width="32" height="8" patternUnits="userSpaceOnUse">
-                    <rect width="32" height="8" fill={C.floor} />
-                    <rect y="3" width="32" height="1" fill={C.floorLine} />
-                    <rect y="7" width="32" height="1" fill={C.floorLine} />
-                    <rect x="12" width="1" height="3" fill={C.floorLine} />
-                    <rect x="27" y="4" width="1" height="3" fill={C.floorLine} />
-                    <rect x="2" y="1" width="6" height="1" fill={C.floorLight} />
-                    <rect x="16" y="5" width="8" height="1" fill={C.floorLight} />
+                {/* Long light-oak boards */}
+                <pattern id="room-planks" width="64" height="8" patternUnits="userSpaceOnUse">
+                    <rect width="64" height="8" fill={C.floor} />
+                    <rect y="3" width="64" height="1" fill={C.floorLine} />
+                    <rect y="7" width="64" height="1" fill={C.floorLine} />
+                    <rect x="22" width="1" height="3" fill={C.floorLine} />
+                    <rect x="52" y="4" width="1" height="3" fill={C.floorLine} />
+                    <rect x="4" y="1" width="12" height="1" fill={C.floorLight} />
+                    <rect x="30" y="5" width="14" height="1" fill={C.floorLight} />
                 </pattern>
-                <pattern id="room-wallpaper" width="6" height="8" patternUnits="userSpaceOnUse">
-                    <rect width="6" height="8" fill={C.wall} />
-                    <rect width="1" height="8" fill={C.wallStripe} />
+                {/* Smooth plaster, a faint fleck here and there */}
+                <pattern id="room-wallpaper" width="14" height="10" patternUnits="userSpaceOnUse">
+                    <rect width="14" height="10" fill={C.wall} />
+                    <rect x="3" y="2" width="1" height="1" fill={C.wallShade} />
+                    <rect x="10" y="7" width="1" height="1" fill={C.wallShade} />
                 </pattern>
                 {/* Sashiko running stitch, like the record label's indigo. */}
                 <pattern id="room-sashiko" width="6" height="6" patternUnits="userSpaceOnUse">
@@ -101,28 +141,69 @@ export default function RoomArt({ playing, x0 = 0, width = ROOM.w }: { playing: 
             {/* Floor and walls */}
             <rect x={x0} width={width} height={ROOM.h} fill="url(#room-planks)" />
             <rect x={x0} width={width} height="44" fill="url(#room-wallpaper)" />
-            <Rects rects={[px(x0, 40, width, 4, C.wallTrim), px(x0, 44, width, 1, C.woodDeep)]} />
+            <Rects rects={[px(x0, 40, width, 4, C.wallTrim), px(x0, 40, width, 1, C.wallTrimShadow), px(x0, 44, width, 1, C.floorLine)]} />
 
-            {/* Window: night outside */}
+            {/* Window: black steel frame, night outside */}
             <Rects
                 rects={[
-                    px(102, 7, 36, 26, C.woodDark),
-                    px(104, 9, 32, 22, '#16213F'),
-                    px(119, 9, 2, 22, C.woodDark),
-                    px(104, 19, 32, 2, C.woodDark),
+                    px(102, 7, 36, 26, C.steel),
+                    px(103, 8, 34, 24, '#16213F'),
+                    px(119, 8, 1, 24, C.steel),
+                    px(103, 19, 34, 1, C.steel),
                     px(110, 11, 3, 3, C.cream),
                     px(111, 11, 2, 1, '#16213F'),
                     px(125, 13, 1, 1, C.cream),
                     px(131, 11, 1, 1, C.cream),
                     px(107, 25, 1, 1, C.cream),
                     px(128, 24, 1, 1, C.cream),
-                    px(100, 33, 40, 3, C.wood),
+                    px(100, 33, 40, 2, C.wallTrim),
+                    px(100, 35, 40, 1, C.wallTrimShadow),
                 ]}
             />
 
-            {/* Poster: the logo */}
-            <Rects rects={[px(80, 10, 16, 22, C.cream), px(80, 31, 16, 1, '#B8B1A3')]} />
-            <image href="/logo.svg" x="81" y="17" width="14" height="5" preserveAspectRatio="xMidYMid meet" />
+            {/* ── Floating shelf: model F1 car up top, manga below, LED strips under each tier ── */}
+            <defs>
+                <linearGradient id="room-led" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#FFD98A" stopOpacity="0.65" />
+                    <stop offset="1" stopColor="#FFD98A" stopOpacity="0" />
+                </linearGradient>
+            </defs>
+            <rect x="144" y="21" width="32" height="7" fill="url(#room-led)" />
+            <rect x="144" y="36" width="32" height="5" fill="url(#room-led)" />
+            {/* The car: side view, facing left */}
+            <Rects rects={F1_CAR.flatMap((row, y) => [...row].flatMap((c, x) => (F1_COLOURS[c] ? [px(152 + x, 13 + y, 1, 1, F1_COLOURS[c])] : [])))} />
+            {/* Manga volumes and a bookend */}
+            <Rects rects={MANGA.map(([c, h], i) => px(147 + i * 2.5, 34 - h, 2, h, c))} />
+            <Rects rects={MANGA.map(([, h], i) => px(147 + i * 2.5, 35 - h, 2, 0.6, 'rgba(255,255,255,0.35)'))} />
+            <Rects rects={[px(168, 28, 1, 6, C.steel), px(168, 33, 4, 1, C.steel)]} />
+            {/* Boards and brackets */}
+            <Rects
+                rects={[
+                    px(143, 19, 34, 2, C.wood),
+                    px(143, 19, 34, 1, '#946447'),
+                    px(143, 34, 34, 2, C.wood),
+                    px(143, 34, 34, 1, '#946447'),
+                    px(145, 21, 1, 2, C.steel),
+                    px(174, 21, 1, 2, C.steel),
+                    px(145, 36, 1, 2, C.steel),
+                    px(174, 36, 1, 2, C.steel),
+                ]}
+            />
+
+            {/* Framed art piece: thin black frame, white mat */}
+            <Rects rects={[px(75, 7, 22, 28, C.steel), px(76, 8, 20, 26, '#FAF8F4'), px(75, 35, 22, 1, C.wallShade)]} />
+            {poster ? (
+                <image
+                    href={poster}
+                    x="78"
+                    y="10"
+                    width="16"
+                    height="22"
+                    preserveAspectRatio="xMidYMid slice"
+                />
+            ) : (
+                <image href="/logo.svg" x="78" y="18" width="16" height="6" preserveAspectRatio="xMidYMid meet" />
+            )}
 
             {/* Rug */}
             <rect x="84" y="86" width="80" height="52" fill={C.rugEdge} />
@@ -131,14 +212,14 @@ export default function RoomArt({ playing, x0 = 0, width = ROOM.w }: { playing: 
             {/* ── Closet corner: a rail of pieces, shoes underneath ── */}
             <Rects
                 rects={[
-                    px(12, 8, 2, 6, C.metal),
-                    px(68, 8, 2, 6, C.metal),
-                    px(12, 10, 58, 1, C.metal),
+                    px(12, 8, 2, 6, C.steel),
+                    px(68, 8, 2, 6, C.steel),
+                    px(12, 10, 58, 1, C.steel),
                 ]}
             />
             {GARMENTS.map(([x, w, len, c, d], i) => (
                 <g key={i}>
-                    <rect x={x + Math.floor(w / 2)} y={11} width="1" height="2" fill={C.metal} />
+                    <rect x={x + Math.floor(w / 2)} y={11} width="1" height="2" fill={C.steel} />
                     <rect x={x + 1} y={13} width={w - 2} height="2" fill={c} />
                     <rect x={x} y={15} width={w} height={len} fill={c} />
                     <rect x={x + w - 1} y={15} width="1" height={len} fill={d} />
@@ -169,7 +250,7 @@ export default function RoomArt({ playing, x0 = 0, width = ROOM.w }: { playing: 
             <Rects
                 rects={[
                     px(10, 132, 58, 22, C.wood),
-                    px(10, 132, 58, 1, '#B9875F'),
+                    px(10, 132, 58, 1, '#946447'),
                     px(10, 154, 58, 14, C.woodDark),
                     px(38, 155, 1, 12, C.woodDeep),
                     px(22, 160, 3, 1, C.gold),
@@ -264,7 +345,8 @@ export default function RoomArt({ playing, x0 = 0, width = ROOM.w }: { playing: 
             <Rects
                 rects={[
                     px(214, 158, 12, 10, C.pot),
-                    px(214, 158, 12, 2, '#8E4029'),
+                    px(223, 158, 3, 10, C.potShade),
+                    px(214, 158, 12, 1, C.potShade),
                     px(213, 146, 6, 8, C.leaf),
                     px(219, 142, 6, 10, C.leafDark),
                     px(222, 148, 5, 8, C.leaf),

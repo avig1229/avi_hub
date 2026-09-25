@@ -6,7 +6,7 @@ export const ROOM = { w: 240, h: 180 };
 
 export type Rect = { x: number; y: number; w: number; h: number };
 export type Point = { x: number; y: number };
-export type SpotId = 'closet' | 'arcade' | 'records';
+export type SpotId = 'closet' | 'arcade' | 'records' | 'poster' | 'shelf';
 
 export type Spot = {
     id: SpotId;
@@ -21,8 +21,12 @@ export type Spot = {
 export const SPOTS: Spot[] = [
     { id: 'closet', label: 'Closet', hint: 'Coming soon', box: { x: 10, y: 5, w: 62, h: 50 }, stand: { x: 40, y: 68 } },
     { id: 'arcade', label: 'Arcade', hint: 'Selected work', box: { x: 178, y: 1, w: 38, h: 64 }, stand: { x: 197, y: 80 } },
+    { id: 'shelf', label: 'Shelf', hint: 'F1 & manga', box: { x: 141, y: 9, w: 38, h: 30 }, stand: { x: 160, y: 68 } },
     { id: 'records', label: 'Records', hint: 'Play records', box: { x: 8, y: 128, w: 60, h: 42 }, stand: { x: 80, y: 152 } },
 ];
+
+// The framed art piece on the wall; its label is the piece's project title.
+export const POSTER_SPOT: Spot = { id: 'poster', label: 'Art', hint: 'Open the project', box: { x: 74, y: 6, w: 24, h: 31 }, stand: { x: 86, y: 66 } };
 
 // Where he can walk.
 export const FLOOR: Rect = { x: 16, y: 56, w: 208, h: 114 };
