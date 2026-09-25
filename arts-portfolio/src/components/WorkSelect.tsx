@@ -143,17 +143,18 @@ export default function WorkSelect({ items }: { items: WorkItem[] }) {
     const status = rolling !== null ? 'Shuffling…' : preview !== null && preview !== selected ? 'Cued' : 'Now playing';
 
     const cols = Math.min(items.length + 1, 7); // roster columns on wide screens
+    const settle = rolling !== null ? 'transition-none' : 'transition-opacity duration-700 ease-out';
 
     return (
-        // A full-screen select screen: the shown project fills the background
-        // like a hero, the roster sits in the middle, its details below.
+        // A full-screen select screen: the shown project's picture in full
+        // across the middle, the roster in a selection box at the bottom.
         <section
             id="work"
             onKeyDown={onSectionKey}
             aria-label="Selected work"
-            className="relative -mt-24 -mx-6 md:-mx-12 min-h-svh overflow-hidden bg-black text-[#E6E1D6] flex flex-col"
+            className="relative -mt-24 -mx-6 md:-mx-12 min-h-svh overflow-hidden bg-black text-[#E6E1D6]"
         >
-            {/* Backdrop: the shown project, full bleed */}
+            {/* Ambient backdrop: a blurred, darkened copy of the shown picture */}
             <div aria-hidden className="absolute inset-0">
                 {items.map((it, i) =>
                     it.screen ? (
@@ -161,39 +162,30 @@ export default function WorkSelect({ items }: { items: WorkItem[] }) {
                             key={it.slug}
                             src={it.screen}
                             alt=""
-                            className={`absolute inset-0 w-full h-full object-cover motion-reduce:transition-none ${
-                                i === shown ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.05]'
-                            } ${rolling !== null ? 'transition-none' : 'transition-[opacity,transform] duration-700 ease-out'}`}
+                            className={`absolute inset-0 w-full h-full object-cover blur-2xl scale-110 motion-reduce:transition-none ${
+                                i === shown ? 'opacity-45' : 'opacity-0'
+                            } ${settle}`}
                         />
                     ) : null,
                 )}
-                {/* A soft flash when the screen settles on a new project (not on every roulette flicker). */}
-                <motion.div
-                    key={rolling !== null ? 'rolling' : shown}
-                    initial={{ opacity: reduceMotion || rolling !== null ? 0 : 0.15 }}
-                    animate={{ opacity: 0 }}
-                    transition={{ duration: 0.35, ease: 'easeOut' }}
-                    className="absolute inset-0 bg-white"
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/35 to-black/90" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(0,0,0,0.65)_100%)]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/85" />
                 <div
                     className="absolute inset-0 opacity-[0.12] mix-blend-overlay"
                     style={{ backgroundImage: 'repeating-linear-gradient(0deg, #000 0 1px, transparent 1px 3px)' }}
                 />
             </div>
 
-            <div className="relative flex-1 flex flex-col items-center justify-between gap-8 pt-24 pb-10 px-4 md:px-12">
+            <div className="relative h-svh min-h-[38rem] flex flex-col items-center gap-4 md:gap-5 pt-20 md:pt-24 pb-6 md:pb-8">
                 {/* Title */}
-                <header className="w-full text-center">
+                <header className="w-full px-4 md:px-12 text-center">
                     <Link
                         href="/#room-view"
-                        className="block w-fit mb-6 md:mb-2 font-mono text-xs uppercase tracking-widest text-[#E6E1D6]/60 hover:text-[#E6E1D6] transition-colors"
+                        className="block w-fit mb-4 md:mb-0 font-mono text-xs uppercase tracking-widest text-[#E6E1D6]/60 hover:text-[#E6E1D6] transition-colors"
                     >
                         ← Back to the room
                     </Link>
                     <h2
-                        className={`${arcade.className} inline-block uppercase leading-[1.15] text-[clamp(1.35rem,5.2vw,3.75rem)]`}
+                        className={`${arcade.className} inline-block uppercase leading-[1.15] text-[clamp(1.2rem,3.8vw,2.75rem)]`}
                         style={arcadeTitleStyle}
                     >
                         Selected Work
@@ -202,14 +194,58 @@ export default function WorkSelect({ items }: { items: WorkItem[] }) {
                         aria-hidden
                         animate={reduceMotion ? undefined : { opacity: [1, 1, 0, 0] }}
                         transition={{ duration: 1.1, times: [0, 0.55, 0.56, 1], repeat: Infinity }}
-                        className={`${arcade.className} mt-4 text-[10px] md:text-xs uppercase tracking-[0.2em]`}
+                        className={`${arcade.className} mt-3 text-[9px] md:text-[11px] uppercase tracking-[0.2em]`}
                     >
                         Choose your project
                     </motion.p>
                 </header>
 
-                {/* The selection box */}
-                <div className="w-full flex flex-col items-center">
+                {/* The picture, in full: as wide as the screen, and never taller than the space
+                    left between the title and the selection box, so it's never cropped */}
+                <div className="relative w-full flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)]">
+                    {items.map((it, i) =>
+                        it.screen ? (
+                            <img
+                                key={it.slug}
+                                src={it.screen}
+                                alt={i === shown ? it.title : ''}
+                                aria-hidden={i !== shown}
+                                className={`[grid-area:1/1] w-full h-full object-contain motion-reduce:transition-none ${
+                                    i === shown ? 'opacity-100' : 'opacity-0'
+                                } ${settle}`}
+                            />
+                        ) : null,
+                    )}
+                    {/* A soft flash when the screen settles on a new project (not on every roulette flicker). */}
+                    <motion.div
+                        aria-hidden
+                        key={rolling !== null ? 'rolling' : shown}
+                        initial={{ opacity: reduceMotion || rolling !== null ? 0 : 0.12 }}
+                        animate={{ opacity: 0 }}
+                        transition={{ duration: 0.35, ease: 'easeOut' }}
+                        className="absolute inset-0 bg-white pointer-events-none"
+                    />
+                </div>
+
+                {/* The shown project */}
+                <div className="w-full max-w-3xl px-4 text-center" aria-live="polite">
+                    <p className="font-mono text-[10px] md:text-[11px] uppercase tracking-widest text-[#E6E1D6]/70">
+                        {[item.category, item.date].filter(Boolean).join(' · ')}
+                    </p>
+                    <div className="mt-1 flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
+                        <h3 className="font-display text-3xl md:text-5xl leading-none">{item.title}</h3>
+                        <Link
+                            href={`/work/${item.slug}`}
+                            tabIndex={rolling !== null ? -1 : 0}
+                            className={`${arcade.className} text-[9px] md:text-[10px] uppercase px-4 py-2.5 bg-[#F2C14E] text-black hover:bg-[#ffd76a] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F2C14E]`}
+                        >
+                            Open project →
+                        </Link>
+                    </div>
+                </div>
+
+                {/* The selection box, bottom centre */}
+                <div className="w-full px-4 flex flex-col items-center">
                     <div className="mb-2 flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest">
                         <span className={`${arcade.className} text-[#D7263D] text-xs`}>1P</span>
                         <span aria-hidden className={rolling !== null ? 'animate-pulse' : ''}>▶</span>
@@ -223,7 +259,7 @@ export default function WorkSelect({ items }: { items: WorkItem[] }) {
                         onKeyDown={onRosterKey}
                         onMouseLeave={() => setPreview(null)}
                         style={{ ['--cols' as string]: cols }}
-                        className="grid grid-cols-4 md:grid-cols-[repeat(var(--cols),minmax(0,1fr))] gap-2 md:gap-3 p-2 md:p-3 w-[min(100%,26rem)] md:w-[min(100%,calc(var(--cols)*7.5rem))] border-2 border-[#F2C14E]/60 bg-black/45 backdrop-blur-sm shadow-[0_0_0_4px_rgba(0,0,0,0.35)]"
+                        className="grid grid-cols-4 md:grid-cols-[repeat(var(--cols),minmax(0,1fr))] gap-2 p-2 w-[min(100%,24rem)] md:w-[min(100%,calc(var(--cols)*6rem))] border-2 border-[#F2C14E]/60 bg-black/55 backdrop-blur-sm shadow-[0_0_0_4px_rgba(0,0,0,0.35)]"
                     >
                         {items.map((it, i) => {
                             const isSelected = i === selected && rolling === null;
@@ -282,29 +318,11 @@ export default function WorkSelect({ items }: { items: WorkItem[] }) {
                             </span>
                         </button>
                     </div>
-                    <p className="mt-3 font-mono text-[10px] md:text-[11px] uppercase tracking-widest text-[#E6E1D6]/55 text-center">
+                    <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-[#E6E1D6]/50 text-center">
                         Or let the <span aria-hidden>?</span>
                         <span className="sr-only">random</span> box decide
                         <span className="hidden lg:inline"> · type a code like A2 · R for random</span>
                     </p>
-                </div>
-
-                {/* The shown project */}
-                <div className="w-full max-w-2xl text-center" aria-live="polite">
-                    <p className="font-mono text-[11px] uppercase tracking-widest text-[#E6E1D6]/70">
-                        {[item.category, item.date].filter(Boolean).join(' · ')}
-                    </p>
-                    <h3 className="mt-2 font-display text-4xl md:text-6xl leading-none">{item.title}</h3>
-                    {item.summary && (
-                        <p className="hidden md:block mt-3 text-sm leading-relaxed text-[#E6E1D6]/80 line-clamp-2">{item.summary}</p>
-                    )}
-                    <Link
-                        href={`/work/${item.slug}`}
-                        tabIndex={rolling !== null ? -1 : 0}
-                        className={`${arcade.className} inline-block mt-5 text-[10px] md:text-xs uppercase px-5 py-3 bg-[#F2C14E] text-black hover:bg-[#ffd76a] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#F2C14E]`}
-                    >
-                        Open project →
-                    </Link>
                 </div>
             </div>
         </section>

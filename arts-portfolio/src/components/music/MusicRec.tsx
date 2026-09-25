@@ -200,8 +200,12 @@ function formatWeek(date?: string) {
     return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-// The record's sleeve: YouTube's player (kept visible, as YouTube requires)
-// plus the credit. The hero slides it out from behind the record.
+const cover = (videoId: string) => `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+
+// The record player's one interface: YouTube's player (kept visible, as
+// YouTube requires), the credit for what's on, and the crate to put another
+// record on. The hero slides it out from behind the record; the room's
+// record corner brings visitors back here.
 export function RecSleeve({ interactive = true }: { interactive?: boolean }) {
     const ctx = useContext(MusicContext);
     const slot = useRef<HTMLDivElement>(null);
@@ -220,7 +224,7 @@ export function RecSleeve({ interactive = true }: { interactive?: boolean }) {
     }, [register]);
 
     if (!ctx) return null;
-    const { rec, playing } = ctx;
+    const { rec, playing, records, current, choose } = ctx;
     const week = formatWeek(rec.weekOf);
     const link = 'underline underline-offset-4 hover:text-[#e6e1d6]';
 
@@ -244,7 +248,7 @@ export function RecSleeve({ interactive = true }: { interactive?: boolean }) {
                     {rec.song}
                 </h2>
                 <p className="text-sm text-[#e6e1d6]/70">{rec.artist}</p>
-                {rec.note && <p className="hidden md:block mt-3 text-sm italic leading-relaxed line-clamp-2">“{rec.note}”</p>}
+                {rec.note && <p className="mt-2 text-sm italic leading-relaxed line-clamp-2">“{rec.note}”</p>}
                 <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] tracking-widest uppercase text-[#e6e1d6]/60">
                     <a href={rec.url} target="_blank" rel="noopener noreferrer" className={link}>
                         Watch on YouTube ↗
@@ -255,6 +259,38 @@ export function RecSleeve({ interactive = true }: { interactive?: boolean }) {
                         </a>
                     )}
                 </p>
+
+                {records.length > 1 && (
+                    <div className="mt-3 pt-3 border-t border-white/10">
+                        <p className="mb-2 font-mono text-[10px] tracking-[0.25em] uppercase text-[#e6e1d6]/50">
+                            The crate · put one on
+                        </p>
+                        <div className="flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
+                            {records.map((r, i) => (
+                                <button
+                                    key={r.videoId}
+                                    type="button"
+                                    onClick={() => choose(i)}
+                                    title={`${r.song} · ${r.artist}`}
+                                    aria-label={`Put on ${r.song} by ${r.artist}${r.weekly ? ' (weekly rec)' : ''}`}
+                                    aria-current={i === current || undefined}
+                                    className={`relative shrink-0 w-10 h-10 md:w-11 md:h-11 overflow-hidden bg-black ring-offset-2 ring-offset-[#141312] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#f2c14e] ${
+                                        i === current ? 'ring-2 ring-[#f2c14e]' : 'opacity-60 hover:opacity-100'
+                                    }`}
+                                >
+                                    {/* YouTube's 4:3 cover letterboxes 16:9 videos; zoom past the bars. */}
+                                    <img src={cover(r.videoId)} alt="" className="w-full h-full object-cover scale-[1.34]" />
+                                    {r.weekly && (
+                                        <span className="absolute top-0 left-0 px-0.5 text-[8px] leading-3 font-mono bg-[#f2c14e] text-black">W</span>
+                                    )}
+                                    {i === current && playing && (
+                                        <span className="absolute bottom-0 inset-x-0 text-[8px] leading-3 bg-black/70 text-[#f2c14e] text-center">●</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </section>
     );

@@ -15,7 +15,6 @@ import { arcade } from '../arcade';
 import { GuideSpot, useGuide } from '../guide/Guide';
 import { useMusicRec } from '../music/MusicRec';
 import AttractScreen from './AttractScreen';
-import Crate from './Crate';
 import Kid, { KID_SIZE } from './Kid';
 import RoomArt from './RoomArt';
 import Logo from '../Logo';
@@ -52,7 +51,6 @@ export default function Room() {
     const reduce = useReducedMotion();
     const { say } = useGuide();
     const { playing, rec } = useMusicRec();
-    const [crateOpen, setCrateOpen] = useState(false);
 
     const sectionRef = useRef<HTMLElement>(null);
     const roomRef = useRef<HTMLDivElement>(null);
@@ -161,20 +159,22 @@ export default function Room() {
         async (spot: Spot) => {
             if (!ready || phase === 'dive' || phase === 'attract') return;
             if (spot.id === 'arcade') return enterArcade();
-            // The crate opens straight away (so its play button is a direct tap,
-            // which browsers need to start audio) while he walks over.
-            if (spot.id === 'records' && rec) {
-                setCrateOpen(true);
-                say('room:crate', `Avi's crate. Every record in here says something about him.\n\nFlip through and put one on.`, { group: 'room' });
-            }
             await walkTo(spot.stand);
+            // The record corner takes you back to the one record player: the
+            // camera zooms into the turntable and lands on the hero's record,
+            // with the weekly rec and the crate beside it.
+            if (spot.id === 'records' && rec) {
+                say('room:crate', `Avi's records. Every one in the crate says something about him.\n\nPick one and put it on.`, { group: 'room' });
+                document.getElementById('record-player')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
+                return;
+            }
             if (spot.id === 'closet') {
                 say('room:closet', `The closet. Avi's still tidying it.\n\nHis favourite pieces move in here soon.`, { group: 'room' });
-            } else if (spot.id === 'records' && !rec) {
+            } else if (spot.id === 'records') {
                 say('room:records', `No record on this week. Check back soon.`, { group: 'room' });
             }
         },
-        [ready, phase, enterArcade, walkTo, say, rec],
+        [ready, phase, enterArcade, walkTo, say, rec, reduce],
     );
 
     // Click the floor and he walks there.
@@ -293,8 +293,6 @@ export default function Room() {
                     </p>
                 </motion.div>
             </motion.div>
-
-            <Crate open={crateOpen} onClose={() => setCrateOpen(false)} />
 
             {/* Full-screen attract screen once the camera is inside the cabinet */}
             {phase === 'attract' && (

@@ -121,6 +121,8 @@ export default function Hero() {
 
     return (
         <section ref={sectionRef} className="relative h-[420vh] -mt-24 mb-24">
+            {/* Where the record and its player sit side by side (the room's record corner scrolls back here). */}
+            <div id="record-player" aria-hidden className="absolute left-0 h-px w-px" style={{ top: 'calc((100% - 100svh) * 0.93)' }} />
             <div ref={stageRef} className="sticky top-0 h-svh flex items-center justify-center overflow-hidden">
                 <motion.div
                     ref={logoRef}
