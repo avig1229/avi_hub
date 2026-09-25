@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     animate,
@@ -18,7 +18,7 @@ import AttractScreen from './AttractScreen';
 import Kid, { KID_SIZE } from './Kid';
 import RoomArt from './RoomArt';
 import Logo from '../Logo';
-import { ARCADE_SCREEN, FLOOR, KID_START, MARQUEE, RECORD, ROOM, SPOTS, pctX, pctY, type Point, type Spot } from './layout';
+import { ARCADE_SCREEN, FLOOR, KID_START, MARQUEE, POSTER_SPOT, RECORD, ROOM, SPOTS, pctX, pctY, type Point, type Spot } from './layout';
 
 // Avi's room, the landing page's second act, full screen. It fades in right on
 // the turntable's record (carrying on from the hero's record) and zooms out to
@@ -46,11 +46,15 @@ const labelAlign = (spot: Spot) => {
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-export default function Room() {
+// The art piece framed on the wall, and the project it opens.
+export type RoomPoster = { title: string; slug: string; src: string };
+
+export default function Room({ poster }: { poster?: RoomPoster | null }) {
     const router = useRouter();
     const reduce = useReducedMotion();
     const { say } = useGuide();
     const { playing, rec } = useMusicRec();
+    const spots = useMemo(() => (poster ? [...SPOTS, { ...POSTER_SPOT, label: poster.title }] : SPOTS), [poster]);
 
     const sectionRef = useRef<HTMLElement>(null);
     const stageRef = useRef<HTMLDivElement>(null);
@@ -137,7 +141,7 @@ export default function Room() {
         const fx = focusX.get();
         const left: Spot[] = [];
         const right: Spot[] = [];
-        for (const spot of SPOTS) {
+        for (const spot of spots) {
             const c = toWorldX(spot.box.x + spot.box.w / 2);
             if (c < fx - half + 12) left.push(spot);
             else if (c > fx + half - 12) right.push(spot);
@@ -148,7 +152,7 @@ export default function Room() {
                 ? prev
                 : { left, right },
         );
-    }, [mW, focusX, toWorldX]);
+    }, [mW, focusX, toWorldX, spots]);
     useMotionValueEvent(focusX, 'change', updateOffscreen);
     useEffect(() => {
         const id = requestAnimationFrame(updateOffscreen);
@@ -253,6 +257,10 @@ export default function Room() {
             if (!ready || phase === 'dive' || phase === 'attract') return;
             if (spot.id === 'arcade') return enterArcade();
             await walkTo(spot.stand);
+            if (spot.id === 'poster' && poster) {
+                router.push(`/work/${poster.slug}`);
+                return;
+            }
             // The record corner takes you back to the one record player: the
             // camera zooms into the turntable and lands on the hero's record,
             // with the weekly rec and the crate beside it.
@@ -267,7 +275,7 @@ export default function Room() {
                 say('room:records', `No record on this week. Check back soon.`, { group: 'room' });
             }
         },
-        [ready, phase, enterArcade, walkTo, say, rec, reduce],
+        [ready, phase, enterArcade, walkTo, say, rec, reduce, poster, router],
     );
 
     // ── Swipe to look around (phones). A drag pans the camera; a tap still
@@ -326,7 +334,7 @@ export default function Room() {
             <motion.div
                 ref={stageRef}
                 style={{ opacity: fadeIn, pointerEvents: stageEvents }}
-                className="sticky top-0 h-svh overflow-hidden bg-[#3A3350] select-none touch-pan-y"
+                className="sticky top-0 h-svh overflow-hidden bg-[#E8E2D8] select-none touch-pan-y"
                 onPointerDown={onPointerDown}
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
@@ -339,7 +347,7 @@ export default function Room() {
                         style={{ width: worldW, height: dims.H, x: camX, y: camY, scale: camScale, transformOrigin: '0 0' }}
                         onClick={onFloor}
                     >
-                        <RoomArt playing={playing} x0={-boxLeft / k} width={worldW / k} />
+                        <RoomArt playing={playing} x0={-boxLeft / k} width={worldW / k} poster={poster?.src} />
 
                         {/* The 240×180 floor plan: everything clickable lives here. */}
                         <div ref={boxRef} className="absolute top-0" style={{ left: boxLeft, width: ROOM.w * k, height: dims.H }}>
@@ -367,7 +375,7 @@ export default function Room() {
                             </div>
 
                             {/* Hotspots */}
-                            {SPOTS.map((spot) => (
+                            {spots.map((spot) => (
                                 <button
                                     key={spot.id}
                                     type="button"

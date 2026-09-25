@@ -73,3 +73,10 @@ export const RECORD_CRATE_QUERY = groq`*[_id == "recordCrate"][0].records[] {
   youtubeUrl,
   note
 }`;
+
+// The art piece framed on the room's wall.
+export const ROOM_POSTER_QUERY = groq`*[_type == "project" && slug.current == $slug][0] {
+  title,
+  "slug": slug.current,
+  mainImage
+}`;
