@@ -18,12 +18,12 @@ export default async function Home() {
     getRecordCrate(),
     client.fetch(ROOM_POSTER_QUERY, { slug: ROOM_POSTER_SLUG }).catch(() => null),
   ]);
-  // The art piece on the room's wall, rendered tiny so it reads as pixel art.
+  // The art piece on the room's wall.
   const poster: RoomPoster | null = posterDoc?.mainImage
     ? {
         title: posterDoc.title,
         slug: posterDoc.slug,
-        src: urlFor(posterDoc.mainImage).width(48).height(66).fit("crop").auto("format").url(),
+        src: urlFor(posterDoc.mainImage).width(220).height(300).fit("crop").auto("format").url(),
       }
     : null;
 

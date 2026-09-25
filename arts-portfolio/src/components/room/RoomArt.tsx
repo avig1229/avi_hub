@@ -54,6 +54,28 @@ function Rects({ rects }: { rects: R[] }) {
     );
 }
 
+// The model F1 car on the shelf, one character per pixel.
+const F1_COLOURS: Record<string, string> = { r: '#D72E2E', R: '#A81F1F', k: '#1B1B1B', w: '#F0F0F0', y: '#F2C14E', t: '#111111' };
+const F1_CAR = [
+    '.............kk.',
+    '.......yk.....k.',
+    '..rrrrrrrrrrrrR.',
+    'kkrrwwwrrrrrrRR.',
+    '.tt.........tt..',
+];
+
+// Manga volumes on the shelf: [spine colour, height].
+const MANGA: [string, number][] = [
+    ['#E4572E', 7],
+    ['#F2C14E', 7],
+    ['#2B3A8C', 8],
+    ['#1B1B1B', 7],
+    ['#4E9A5A', 7],
+    ['#8C5A9E', 8],
+    ['#C2307A', 7],
+    ['#3B6BFF', 7],
+];
+
 // Garments on the closet rail: [x, width, length, colour, detail colour].
 const GARMENTS: [number, number, number, string, string][] = [
     [15, 8, 26, '#E8B64A', '#C9962F'], // the yee-haw hoodie
@@ -74,7 +96,7 @@ export default function RoomArt({
     playing: boolean;
     x0?: number;
     width?: number;
-    // The art piece on the wall (a small render, shown pixelated).
+    // The art piece on the wall.
     poster?: string;
 }) {
     const s = ARCADE_SCREEN;
@@ -139,7 +161,36 @@ export default function RoomArt({
                 ]}
             />
 
-            {/* Framed art piece: thin black frame, white mat, the piece rendered small and pixelated */}
+            {/* ── Floating shelf: model F1 car up top, manga below, LED strips under each tier ── */}
+            <defs>
+                <linearGradient id="room-led" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stopColor="#FFD98A" stopOpacity="0.65" />
+                    <stop offset="1" stopColor="#FFD98A" stopOpacity="0" />
+                </linearGradient>
+            </defs>
+            <rect x="144" y="21" width="32" height="7" fill="url(#room-led)" />
+            <rect x="144" y="36" width="32" height="5" fill="url(#room-led)" />
+            {/* The car: side view, facing left */}
+            <Rects rects={F1_CAR.flatMap((row, y) => [...row].flatMap((c, x) => (F1_COLOURS[c] ? [px(152 + x, 13 + y, 1, 1, F1_COLOURS[c])] : [])))} />
+            {/* Manga volumes and a bookend */}
+            <Rects rects={MANGA.map(([c, h], i) => px(147 + i * 2.5, 34 - h, 2, h, c))} />
+            <Rects rects={MANGA.map(([, h], i) => px(147 + i * 2.5, 35 - h, 2, 0.6, 'rgba(255,255,255,0.35)'))} />
+            <Rects rects={[px(168, 28, 1, 6, C.steel), px(168, 33, 4, 1, C.steel)]} />
+            {/* Boards and brackets */}
+            <Rects
+                rects={[
+                    px(143, 19, 34, 2, C.wood),
+                    px(143, 19, 34, 1, '#946447'),
+                    px(143, 34, 34, 2, C.wood),
+                    px(143, 34, 34, 1, '#946447'),
+                    px(145, 21, 1, 2, C.steel),
+                    px(174, 21, 1, 2, C.steel),
+                    px(145, 36, 1, 2, C.steel),
+                    px(174, 36, 1, 2, C.steel),
+                ]}
+            />
+
+            {/* Framed art piece: thin black frame, white mat */}
             <Rects rects={[px(75, 7, 22, 28, C.steel), px(76, 8, 20, 26, '#FAF8F4'), px(75, 35, 22, 1, C.wallShade)]} />
             {poster ? (
                 <image
@@ -149,7 +200,6 @@ export default function RoomArt({
                     width="16"
                     height="22"
                     preserveAspectRatio="xMidYMid slice"
-                    style={{ imageRendering: 'pixelated' }}
                 />
             ) : (
                 <image href="/logo.svg" x="78" y="18" width="16" height="6" preserveAspectRatio="xMidYMid meet" />
