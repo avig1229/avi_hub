@@ -2,52 +2,27 @@
 
 import { useEffect, useState } from 'react';
 
-// Third Eye as a chibi pixel sprite, drawn cell by cell: big round head, big
-// white eyes like the mascot's, blush, gold third eye and hoop earrings, a stubby
-// sashiko-stitched body. Frames: standing, mid-step, and a blink.
+// Third Eye as an 8-direction pixel sprite with a 4-frame walk cycle
+// (public/room/kid/{dir}-{frame}.png; the left-facing ones are mirrors of the
+// right). Frame 0 is his standing pose; frames 1 and 3 lift a foot. Every
+// image is loaded up front so turning never flickers. Facing you, he blinks.
 
-const PALETTE: Record<string, string> = {
-    o: '#6B3A22', // outline
-    s: '#F0AE7C', // skin
-    d: '#D98E5F', // sashiko stitching on his head
-    g: '#F2C14E', // gold: third eye, earrings
-    K: '#1B1420', // third eye's pupil
-    h: '#FFFFFF', // eyes
-    r: '#F59A9A', // blush
-    m: '#8A3B2A', // smile
-    b: '#2B3A8C', // indigo shirt
-    t: '#E6E1D6', // sashiko stitch
-    B: '#1D275F', // shorts
-    l: '#3A2F3A', // legs
-    k: '#151015', // shoes
-};
+export type Dir = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
+const DIRS: Dir[] = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+const ALL = [...DIRS.flatMap((d) => [0, 1, 2, 3].map((i) => `${d}-${i}`)), 'S-blink'];
 
-const HEAD = [
-    '....oooooooo....',
-    '..oodsdsdsdsoo..',
-    '.osssssggssssso.',
-    'osssssgKKgssssso',
-    'ossssssggsssssso',
-    'osssssssssssssso',
-    'osshhsssssshhsso',
-    'osshhsssssshhsso',
-    'gsshhsssssshhssg',
-    'gsrrssmssmssrrsg',
-    '.osssssmmssssso.',
-    '..oossssssssoo..',
-    '....oooooooo....',
-];
-// Eyes shut: rows 6–8 of the head.
-const BLINK = ['osssssssssssssso', 'ossoossssssoosso', 'gssssssssssssssg'];
-const BODY = ['.....bbbbbb.....', '....sbtbbtbs....', '.....BBBBBB.....'];
-const LEGS = [
-    ['......l..l......', '.....kk..kk.....'],
-    ['.....l....l.....', '....kk....kk....'],
-];
+// Sprites are 21×34 pixels; in the room one sprite pixel is 0.85 room pixels.
+export const KID_SIZE = { w: 21 * 0.85, h: 34 * 0.85 };
+const FRAMES = 4;
 
-export const KID_SIZE = { w: 16, h: HEAD.length + BODY.length + 2 };
+// Which way he faces when moving by (dx, dy), screen axes (y down).
+export function dirFor(dx: number, dy: number): Dir {
+    const a = (Math.atan2(dy, dx) * 180) / Math.PI; // 0 = east, 90 = south
+    const i = Math.round(a / 45);
+    return (['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'] as const)[((i % 8) + 8) % 8];
+}
 
-export default function Kid({ step = 0, walking = false }: { step?: number; walking?: boolean }) {
+export default function Kid({ dir = 'S', walking = false, step = 0 }: { dir?: Dir; walking?: boolean; step?: number }) {
     // Blink every few seconds.
     const [blink, setBlink] = useState(false);
     useEffect(() => {
@@ -65,20 +40,18 @@ export default function Kid({ step = 0, walking = false }: { step?: number; walk
         return () => window.clearTimeout(t);
     }, []);
 
-    const head = blink ? [...HEAD.slice(0, 6), ...BLINK, ...HEAD.slice(9)] : HEAD;
-    const rows = [...head, ...BODY, ...LEGS[walking ? step % 2 : 0]];
+    const shown = !walking && dir === 'S' && blink ? 'S-blink' : `${dir}-${walking ? step % FRAMES : 0}`;
     return (
-        <svg
-            viewBox={`0 0 ${KID_SIZE.w} ${KID_SIZE.h}`}
-            className={`w-full h-full overflow-visible ${walking ? '' : 'motion-safe:animate-[kid-bob_1.6s_steps(2)_infinite]'}`}
-            shapeRendering="crispEdges"
-            aria-hidden
-        >
-            {rows.flatMap((row, y) =>
-                [...row].map((c, x) =>
-                    PALETTE[c] ? <rect key={`${x}-${y}`} x={x} y={y} width={1.02} height={1.02} fill={PALETTE[c]} /> : null,
-                ),
-            )}
-        </svg>
+        <div aria-hidden className={`relative w-full h-full ${walking ? '' : 'motion-safe:animate-[kid-bob_1.6s_steps(2)_infinite]'}`}>
+            {ALL.map((d) => (
+                <img
+                    key={d}
+                    src={`/room/kid/${d}.png`}
+                    alt=""
+                    draggable={false}
+                    className={`absolute inset-0 w-full h-full [image-rendering:pixelated] ${d === shown ? '' : 'invisible'}`}
+                />
+            ))}
+        </div>
     );
 }
