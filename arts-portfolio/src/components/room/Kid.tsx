@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from 'react';
 
-// Third Eye as an 8-direction pixel sprite (public/room/kid/*.png, one pose
-// per direction; the left-facing ones are mirrors of the right). Every image
-// is loaded up front so turning never flickers. Facing you, he blinks; while
-// walking he hops and waddles.
+// Third Eye as an 8-direction pixel sprite with a 4-frame walk cycle
+// (public/room/kid/{dir}-{frame}.png; the left-facing ones are mirrors of the
+// right). Frame 0 is his standing pose; frames 1 and 3 lift a foot. Every
+// image is loaded up front so turning never flickers. Facing you, he blinks.
 
 export type Dir = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
 const DIRS: Dir[] = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+const ALL = [...DIRS.flatMap((d) => [0, 1, 2, 3].map((i) => `${d}-${i}`)), 'S-blink'];
 
-// Sprites are 18×33 pixels; in the room one sprite pixel is 0.85 room pixels.
-export const KID_SIZE = { w: 18 * 0.85, h: 33 * 0.85 };
+// Sprites are 21×34 pixels; in the room one sprite pixel is 0.85 room pixels.
+export const KID_SIZE = { w: 21 * 0.85, h: 34 * 0.85 };
+const FRAMES = 4;
 
 // Which way he faces when moving by (dx, dy), screen axes (y down).
 export function dirFor(dx: number, dy: number): Dir {
@@ -38,15 +40,10 @@ export default function Kid({ dir = 'S', walking = false, step = 0 }: { dir?: Di
         return () => window.clearTimeout(t);
     }, []);
 
-    const shown = dir === 'S' && blink && !walking ? 'S-blink' : dir;
-    const odd = step % 2 === 1;
+    const shown = !walking && dir === 'S' && blink ? 'S-blink' : `${dir}-${walking ? step % FRAMES : 0}`;
     return (
-        <div
-            aria-hidden
-            className={`relative w-full h-full ${walking ? '' : 'motion-safe:animate-[kid-bob_1.6s_steps(2)_infinite]'}`}
-            style={walking ? { transform: `translateY(${odd ? '-5%' : '0'}) rotate(${odd ? -4 : 4}deg)`, transformOrigin: '50% 100%' } : undefined}
-        >
-            {[...DIRS, 'S-blink'].map((d) => (
+        <div aria-hidden className={`relative w-full h-full ${walking ? '' : 'motion-safe:animate-[kid-bob_1.6s_steps(2)_infinite]'}`}>
+            {ALL.map((d) => (
                 <img
                     key={d}
                     src={`/room/kid/${d}.png`}

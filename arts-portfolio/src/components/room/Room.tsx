@@ -226,7 +226,7 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
     // Legs alternate while he walks.
     useEffect(() => {
         if (phase !== 'walking') return;
-        const id = window.setInterval(() => setStep((s) => s + 1), 140);
+        const id = window.setInterval(() => setStep((s) => s + 1), 120);
         return () => window.clearInterval(id);
     }, [phase]);
 
