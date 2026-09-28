@@ -30,7 +30,7 @@ export type Season = {
     details: Detail[];
 };
 // `video` plays muted on a loop behind the cover (the logo process, by default).
-// It plays the part from `videoStart` seconds in until `videoEndTrim` seconds before the end.
+// It plays once from `videoStart` seconds in until `videoEndTrim` seconds before the end, then holds that frame.
 export type Intro = {
     headline: string;
     text: string[];

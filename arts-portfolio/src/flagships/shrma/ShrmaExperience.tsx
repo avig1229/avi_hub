@@ -124,8 +124,8 @@ function Cover({ intro }: { intro: Intro }) {
     const reduce = useReducedMotion();
     const poster = intro.logo ? src(intro.logo, 2400) : undefined;
 
-    // Play only the middle of the video: from videoStart until videoEndTrim
-    // seconds before the end, then loop back (skipped for very short clips).
+    // Play the video once, from videoStart until videoEndTrim seconds before
+    // the end, then hold on that frame (the whole clip if it's very short).
     const range = (v: HTMLVideoElement) => {
         const start = Math.max(0, intro.videoStart);
         const end = v.duration - Math.max(0, intro.videoEndTrim);
@@ -137,10 +137,8 @@ function Cover({ intro }: { intro: Intro }) {
     const keepInRange = (e: React.SyntheticEvent<HTMLVideoElement>) => {
         const v = e.currentTarget;
         const { start, end } = range(v);
-        if (v.currentTime >= end || v.currentTime < start - 0.5) {
-            v.currentTime = start;
-            v.play().catch(() => {});
-        }
+        if (v.currentTime < start - 0.5) v.currentTime = start;
+        else if (v.currentTime >= end && !v.paused) v.pause();
     };
     return (
         <section aria-label="shRma" className="relative h-svh min-h-[34rem] overflow-hidden bg-[#120E0C] text-[#F1EBE0]">
@@ -154,7 +152,6 @@ function Cover({ intro }: { intro: Intro }) {
                     playsInline
                     onLoadedMetadata={toStart}
                     onTimeUpdate={keepInRange}
-                    onEnded={keepInRange}
                     aria-hidden
                     className="absolute inset-0 w-full h-full object-cover"
                 />
