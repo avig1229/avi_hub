@@ -69,7 +69,7 @@ export const shrmaFields = [
                 description: 'Plays muted on a loop behind the cover. Empty uses the logo process video.',
             }),
             defineField({ name: 'videoStart', title: 'Cover video: start at (seconds)', type: 'number', initialValue: 10 }),
-            defineField({ name: 'videoEndTrim', title: 'Cover video: stop this many seconds before the end', type: 'number', initialValue: 5 }),
+            defineField({ name: 'videoEndTrim', title: 'Cover video: stop this many seconds before the end', type: 'number', initialValue: 2 }),
             defineField({ name: 'text', title: 'Intro text', type: 'text', rows: 5, description: 'Always shown. Leave a blank line between paragraphs.' }),
             defineField({ name: 'details', title: 'Details (logo story, process…)', type: 'array', of: [detailBlock] }),
         ],

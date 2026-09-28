@@ -106,7 +106,7 @@ export default async function ShrmaPage() {
         logo: data?.logo?.src ? data.logo : undefined,
         video: data?.shrmaIntro?.video || byCaption.get('Logo Creating process')?.src,
         videoStart: data?.shrmaIntro?.videoStart ?? 10,
-        videoEndTrim: data?.shrmaIntro?.videoEndTrim ?? 5,
+        videoEndTrim: data?.shrmaIntro?.videoEndTrim ?? 2,
         details: data?.shrmaIntro?.details?.length
             ? data.shrmaIntro.details.map(cleanDetail)
             : DEFAULT_INTRO.details.map((d) => ({
