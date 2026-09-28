@@ -26,6 +26,7 @@ const LEVEL_TEXT: Record<Level, { name: string; tag: string; kid: string }> = {
 const PAPER = '#F1EBE0';
 const INK = '#1C1A17';
 const RED = '#A8221B';
+const GOLD = '#B8913A';
 
 const smallCaps = 'font-sans text-[11px] uppercase tracking-[0.22em]';
 const src = (img: Img, w: number) => (img.src.includes('cdn.sanity.io') ? `${img.src}?w=${w}&auto=format&q=80` : img.src);
@@ -173,36 +174,67 @@ function Cover({ intro }: { intro: Intro }) {
 
 function Foreword({ intro, level, onOpen }: { intro: Intro; level: Level | null; onOpen: (i: Img) => void }) {
     const details = level ? intro.details.filter((d) => sees(level, d.level)) : [];
-    const [first, ...rest] = intro.text;
+    // The story splits into two columns either side of the logo.
+    const half = Math.ceil(intro.text.length / 2);
+    const left = intro.text.slice(0, half);
+    const right = intro.text.slice(half);
+    const para = `${serif.className} text-[1.35rem] md:text-[1.6rem] leading-[1.45]`;
+
     return (
         <section aria-label="Foreword" className="px-6 md:px-16 py-20 md:py-32">
-            <div className="grid md:grid-cols-12 gap-8">
-                <p className={`${smallCaps} md:col-span-3 pt-3`} style={{ color: RED }}>
-                    Foreword
-                </p>
-                <div className={`${serif.className} md:col-span-8 space-y-6 text-2xl md:text-[2rem] leading-[1.35]`}>
-                    {first && (
-                        <p>
-                            <span className="float-left mr-3 mt-2 text-7xl md:text-8xl leading-[0.7] italic" style={{ color: RED }}>
-                                {first.charAt(0)}
-                            </span>
-                            {first.slice(1)}
+            <p className={`${smallCaps} text-center`} style={{ color: RED }}>
+                Foreword
+            </p>
+            <div className="mt-10 md:mt-14 grid lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+                {/* The logo, as a medallion at the centre of the spread */}
+                <div className="lg:col-span-4 lg:col-start-5 lg:row-start-1 lg:sticky lg:top-28 flex justify-center">
+                    <Medallion logo={intro.logo} />
+                </div>
+                <div className="lg:col-span-4 lg:col-start-1 lg:row-start-1 space-y-6 lg:text-right">
+                    {left.map((p, i) => (
+                        <p key={i} className={para}>
+                            {i === 0 ? (
+                                <>
+                                    <span className="float-left lg:float-none mr-3 lg:mr-1 mt-1.5 text-6xl md:text-7xl leading-[0.7] italic" style={{ color: RED }}>
+                                        {p.charAt(0)}
+                                    </span>
+                                    {p.slice(1)}
+                                </>
+                            ) : (
+                                p
+                            )}
                         </p>
-                    )}
-                    {rest.map((p, i) => (
-                        <p key={i}>{p}</p>
                     ))}
-                    <p className="italic opacity-70">— Avi</p>
+                </div>
+                <div className="lg:col-span-4 lg:col-start-9 lg:row-start-1 space-y-6">
+                    {right.map((p, i) => (
+                        <p key={i} className={para}>
+                            {p}
+                        </p>
+                    ))}
+                    <p className={`${para} italic opacity-70`}>— Avi</p>
                 </div>
             </div>
             {details.length > 0 && (
-                <div className="mt-20 md:mt-28 space-y-20">
+                <div className="mt-24 md:mt-32 space-y-20">
                     {details.map((d, i) => (
                         <Note key={i} detail={d} accent={RED} onOpen={onOpen} />
                     ))}
                 </div>
             )}
         </section>
+    );
+}
+
+// The red shRma emblem in a round frame with a fine gold double ring.
+function Medallion({ logo }: { logo?: Img }) {
+    return (
+        <div className="relative w-[min(78vw,20rem)] aspect-square">
+            <div className="absolute inset-0 rounded-full" style={{ boxShadow: `0 0 0 1px ${GOLD}, 0 30px 60px -25px rgba(28,26,23,0.55)` }} />
+            <div className="absolute inset-[7px] rounded-full overflow-hidden bg-[#120E0C]" style={{ boxShadow: `0 0 0 1px ${GOLD}` }}>
+                {logo && <img src={src(logo, 900)} alt="The shRma logo" className="w-full h-full object-cover scale-[1.35]" />}
+            </div>
+        </div>
     );
 }
 
