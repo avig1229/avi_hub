@@ -4,8 +4,14 @@
     {
       "name": "arts-portfolio",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "arts-portfolio", "run", "dev"],
-      "port": 3000
+      "runtimeArgs": [
+        "--prefix",
+        "arts-portfolio",
+        "run",
+        "dev"
+      ],
+      "port": 3000,
+      "autoPort": true
     }
   ]
 }
