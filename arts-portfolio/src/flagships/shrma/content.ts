@@ -29,7 +29,17 @@ export type Season = {
     photos: Img[];
     details: Detail[];
 };
-export type Intro = { headline: string; text: string[]; logo?: Img; details: Detail[] };
+// `video` plays muted on a loop behind the cover (the logo process, by default).
+// It plays the part from `videoStart` seconds in until `videoEndTrim` seconds before the end.
+export type Intro = {
+    headline: string;
+    text: string[];
+    logo?: Img;
+    video?: string;
+    videoStart: number;
+    videoEndTrim: number;
+    details: Detail[];
+};
 
 export const ERAS = {
     meraki: { chapter: 'Chapter I', name: 'Meraki', hanzi: '美拉奇', blurb: 'Three released seasons, co-founded as Meraki.' },

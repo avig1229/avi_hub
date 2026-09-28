@@ -6,6 +6,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import Model3D from './Model3D';
 import { serif } from './fonts';
+import { arcade } from '@/components/arcade';
+import Kid from '@/components/room/Kid';
 import { ERAS, LEVELS, sees, type Detail, type Img, type Intro, type Level, type Piece, type Season } from './content';
 
 // The shRma page, as a lookbook: a cover, a foreword, "how geeky are you with
@@ -14,10 +16,10 @@ import { ERAS, LEVELS, sees, type Detail, type Img, type Intro, type Level, type
 // the visitor's level decides how much process each chapter shows.
 
 const LEVEL_KEY = 'shrma-geek-level';
-const LEVEL_TEXT: Record<Level, { name: string; tag: string }> = {
-    low: { name: 'Low', tag: 'Just the vibes: the pieces and the pictures.' },
-    mid: { name: 'Mid', tag: 'Show me how: the stories, moodboards and sketches.' },
-    high: { name: 'High AF', tag: 'Give me everything: every iteration, doc and spec.' },
+const LEVEL_TEXT: Record<Level, { name: string; tag: string; kid: string }> = {
+    low: { name: 'Low', tag: 'Just the vibes: the pieces and the pictures.', kid: 'Chill. Scenic route it is.' },
+    mid: { name: 'Mid', tag: 'Show me how: the stories, moodboards and sketches.', kid: "Nice. You'll see how it's made." },
+    high: { name: 'High AF', tag: 'Give me everything: every iteration, doc and spec.', kid: "Oh, you're one of us. Buckle up." },
 };
 
 // The book's paper, ink and craft accents.
@@ -119,10 +121,48 @@ export default function ShrmaExperience({ intro, seasons }: { intro: Intro; seas
 // ── Cover and foreword ──────────────────────────────────────────────────────
 
 function Cover({ intro }: { intro: Intro }) {
+    const reduce = useReducedMotion();
+    const poster = intro.logo ? src(intro.logo, 2400) : undefined;
+
+    // Play only the middle of the video: from videoStart until videoEndTrim
+    // seconds before the end, then loop back (skipped for very short clips).
+    const range = (v: HTMLVideoElement) => {
+        const start = Math.max(0, intro.videoStart);
+        const end = v.duration - Math.max(0, intro.videoEndTrim);
+        return Number.isFinite(end) && end - start > 2 ? { start, end } : { start: 0, end: v.duration };
+    };
+    const toStart = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+        e.currentTarget.currentTime = range(e.currentTarget).start;
+    };
+    const keepInRange = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+        const v = e.currentTarget;
+        const { start, end } = range(v);
+        if (v.currentTime >= end || v.currentTime < start - 0.5) {
+            v.currentTime = start;
+            v.play().catch(() => {});
+        }
+    };
     return (
         <section aria-label="shRma" className="relative h-svh min-h-[34rem] overflow-hidden bg-[#120E0C] text-[#F1EBE0]">
-            {intro.logo && <img src={src(intro.logo, 2400)} alt="The shRma logo" className="absolute inset-0 w-full h-full object-cover" />}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/20" />
+            {/* The logo process, playing quietly behind the cover (a still for reduced motion). */}
+            {intro.video && !reduce ? (
+                <video
+                    src={intro.video}
+                    poster={poster}
+                    autoPlay
+                    muted
+                    playsInline
+                    onLoadedMetadata={toStart}
+                    onTimeUpdate={keepInRange}
+                    onEnded={keepInRange}
+                    aria-hidden
+                    className="absolute inset-0 w-full h-full object-cover"
+                />
+            ) : (
+                poster && <img src={poster} alt="The shRma logo" className="absolute inset-0 w-full h-full object-cover" />
+            )}
+            <div className="absolute inset-0 bg-black/45" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/30" />
             <div className="absolute inset-x-0 bottom-0 px-6 md:px-16 pb-10 md:pb-14 flex items-end justify-between gap-6">
                 <div>
                     <p className={`${smallCaps} opacity-80`}>A lookbook · 2024 —</p>
@@ -172,10 +212,23 @@ function Foreword({ intro, level, onOpen }: { intro: Intro; level: Level | null;
 // ── "How geeky are you with design?" ────────────────────────────────────────
 
 function TheQuestion({ level, onChoose }: { level: Level | null; onChoose: (l: Level) => void }) {
+    const reduce = useReducedMotion();
     const [hover, setHover] = useState<Level | null>(null);
     const shown = hover ?? level;
+    const rank = shown ? LEVELS.indexOf(shown) + 1 : 0;
+
+    // Third Eye gets more excited the geekier you go: standing, walking in
+    // place, then hopping.
+    const [step, setStep] = useState(0);
+    const moving = !reduce && (shown === 'mid' || shown === 'high');
+    useEffect(() => {
+        if (!moving) return;
+        const id = window.setInterval(() => setStep((n) => n + 1), shown === 'high' ? 90 : 170);
+        return () => window.clearInterval(id);
+    }, [moving, shown]);
+
     return (
-        <section aria-label="How geeky are you with design?" className="border-y px-6 md:px-16 py-24 md:py-36 text-center" style={{ borderColor: `${INK}22` }}>
+        <section aria-label="How geeky are you with design?" className="border-y px-6 md:px-16 py-20 md:py-28 text-center" style={{ borderColor: `${INK}22` }}>
             <p className={smallCaps} style={{ color: RED }}>
                 Before we begin
             </p>
@@ -184,11 +237,35 @@ function TheQuestion({ level, onChoose }: { level: Level | null; onChoose: (l: L
                 <br />
                 with design?
             </h2>
-            <div role="radiogroup" aria-label="Geek level" className="mt-12 md:mt-16 flex flex-wrap justify-center gap-x-10 md:gap-x-16 gap-y-4">
-                {LEVELS.map((l) => {
+
+            {/* Third Eye hosts the question */}
+            <div className="mt-10 md:mt-12 flex flex-col items-center">
+                <div className="relative max-w-[17rem] rounded-2xl border-2 bg-white/70 px-4 py-3 text-sm md:text-base leading-snug" style={{ borderColor: `${INK}22` }}>
+                    <span className={`${arcade.className} absolute -top-2.5 left-4 px-2 py-0.5 rounded-full text-[8px] uppercase`} style={{ background: '#F2C14E', color: INK }}>
+                        Third Eye
+                    </span>
+                    {shown ? LEVEL_TEXT[shown].kid : "Pick honestly. I won't judge. Much."}
+                    <span
+                        aria-hidden
+                        className="absolute -bottom-[8px] left-1/2 w-3.5 h-3.5 -translate-x-1/2 rotate-45 border-r-2 border-b-2 bg-[#F8F5EF]"
+                        style={{ borderColor: `${INK}22` }}
+                    />
+                </div>
+                <motion.div
+                    className="mt-4 w-16 md:w-20 aspect-[21/34]"
+                    animate={shown === 'high' && !reduce ? { y: [0, -10, 0] } : { y: 0 }}
+                    transition={shown === 'high' ? { duration: 0.45, repeat: Infinity, ease: 'easeOut' } : { duration: 0.2 }}
+                >
+                    <Kid dir="S" walking={moving} step={step} />
+                </motion.div>
+            </div>
+
+            {/* The choices, as stamps */}
+            <div role="radiogroup" aria-label="Geek level" className="mt-8 flex flex-wrap justify-center gap-3 md:gap-5">
+                {LEVELS.map((l, i) => {
                     const on = level === l;
                     return (
-                        <button
+                        <motion.button
                             key={l}
                             type="button"
                             role="radio"
@@ -198,23 +275,31 @@ function TheQuestion({ level, onChoose }: { level: Level | null; onChoose: (l: L
                             onMouseLeave={() => setHover(null)}
                             onFocus={() => setHover(l)}
                             onBlur={() => setHover(null)}
-                            className={`${serif.className} relative text-4xl md:text-6xl pb-2 outline-none transition-opacity ${
-                                shown && shown !== l ? 'opacity-35' : 'opacity-100'
-                            } focus-visible:underline`}
+                            whileHover={reduce ? undefined : { rotate: i === 1 ? 2 : -2, scale: 1.04 }}
+                            whileTap={reduce ? undefined : { scale: 0.96 }}
+                            className={`${serif.className} rounded-full border-2 px-7 md:px-9 py-2.5 md:py-3 text-2xl md:text-4xl outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
+                            style={{
+                                borderColor: on ? RED : `${INK}55`,
+                                background: on ? RED : 'transparent',
+                                color: on ? PAPER : INK,
+                            }}
                         >
                             {LEVEL_TEXT[l].name}
-                            <span
-                                aria-hidden
-                                className="absolute left-0 right-0 -bottom-0.5 h-[2px] origin-left transition-transform duration-300"
-                                style={{ background: RED, transform: `scaleX(${on ? 1 : 0})` }}
-                            />
-                        </button>
+                        </motion.button>
                     );
                 })}
             </div>
-            <p className="mt-8 min-h-[1.5em] text-base md:text-lg opacity-70">
-                {shown ? LEVEL_TEXT[shown].tag : 'Pick one. You can change it anytime.'}
-            </p>
+            <p className="mt-6 min-h-[1.5em] text-base md:text-lg opacity-70">{shown ? LEVEL_TEXT[shown].tag : 'You can change it anytime.'}</p>
+
+            {/* The geek-o-meter */}
+            <div className={`${arcade.className} mt-6 inline-flex items-center gap-3 text-[8px] md:text-[9px] uppercase tracking-widest opacity-70`} aria-hidden>
+                Geek-o-meter
+                <span className="flex gap-1">
+                    {[1, 2, 3].map((n) => (
+                        <span key={n} className="w-5 h-2.5 border" style={{ borderColor: INK, background: n <= rank ? RED : 'transparent' }} />
+                    ))}
+                </span>
+            </div>
         </section>
     );
 }

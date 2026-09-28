@@ -27,7 +27,7 @@ const SHRMA_QUERY = groq`*[_type == "project" && slug.current == "shrma"][0] {
     "text": pt::text(description),
     "media": gallery[]{ _type, caption, "src": asset->url, "w": asset->metadata.dimensions.width, "h": asset->metadata.dimensions.height }
   },
-  shrmaIntro { headline, text, "details": details[]${DETAIL} },
+  shrmaIntro { headline, text, "video": video.asset->url, videoStart, videoEndTrim, "details": details[]${DETAIL} },
   shrmaSeasons[] {
     name, hanzi, label, date, era, status, oneLiner, palette,
     "keyVisuals": keyVisuals[defined(asset)]${IMG},
@@ -59,7 +59,7 @@ type ShrmaData = {
     content?: Block[];
     logo?: Img;
     subsections?: Section[];
-    shrmaIntro?: { headline?: string; text?: string; details?: SanityDetail[] };
+    shrmaIntro?: { headline?: string; text?: string; video?: string; videoStart?: number; videoEndTrim?: number; details?: SanityDetail[] };
     shrmaSeasons?: SanitySeason[];
 } | null;
 
@@ -104,6 +104,9 @@ export default async function ShrmaPage() {
         headline: data?.shrmaIntro?.headline?.trim() || DEFAULT_INTRO.headline,
         text: introText,
         logo: data?.logo?.src ? data.logo : undefined,
+        video: data?.shrmaIntro?.video || byCaption.get('Logo Creating process')?.src,
+        videoStart: data?.shrmaIntro?.videoStart ?? 10,
+        videoEndTrim: data?.shrmaIntro?.videoEndTrim ?? 5,
         details: data?.shrmaIntro?.details?.length
             ? data.shrmaIntro.details.map(cleanDetail)
             : DEFAULT_INTRO.details.map((d) => ({
