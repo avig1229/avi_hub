@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity'
+import { shrmaFields } from './shrmaFields'
 
 export default defineType({
     name: 'project',
@@ -194,7 +195,8 @@ export default defineType({
                     ]
                 }
             ]
-        })
+        }),
+        ...shrmaFields,
     ],
     preview: {
         select: {
