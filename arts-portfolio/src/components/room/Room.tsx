@@ -393,7 +393,7 @@ export default function Room({ poster }: { poster?: RoomPoster | null }) {
                 return;
             }
             if (spot.id === 'shelf') {
-                say('room:shelf', `Avi's shelf. A model F1 car up top, his favourite manga underneath.\n\nThe lights are the best part, honestly.`, { group: 'room' });
+                say('room:shelf', `Avi's shelf. His F1 car up top, his race helmet holding up the manga.\n\nThe lights are the best part, honestly.`, { group: 'room' });
                 return;
             }
             if (spot.id === 'closet') {
