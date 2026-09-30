@@ -54,15 +54,39 @@ function Rects({ rects }: { rects: R[] }) {
     );
 }
 
-// The model F1 car on the shelf, one character per pixel.
-const F1_COLOURS: Record<string, string> = { r: '#D72E2E', R: '#A81F1F', k: '#1B1B1B', w: '#F0F0F0', y: '#F2C14E', t: '#111111' };
+// Pixel models on the shelf, one character per pixel: Avi's F1 car (red,
+// yellow-striped tyres, yellow-helmeted driver) and his yellow race helmet.
+const MODEL_COLOURS: Record<string, string> = {
+    r: '#D7382B', // car red
+    R: '#9E2519', // shadowed red
+    k: '#1E1E22', // carbon, tyres
+    g: '#4A4A52', // rims
+    y: '#F2C94C', // yellow: helmet, tyre stripes, camera
+    v: '#2E4B5A', // visor
+    p: '#6B3A7A', // visor tint
+};
 const F1_CAR = [
-    '.............kk.',
-    '.......yk.....k.',
-    '..rrrrrrrrrrrrR.',
-    'kkrrwwwrrrrrrRR.',
-    '.tt.........tt..',
+    '...............y......kkkk..',
+    '...............r......kRRk..',
+    '...........kkkyrrrrr..kRRk..',
+    '........rrrrrrrrrrrrrrrrRRk.',
+    '..kk.kkkrrrrRrRrRrrrrkkkrRk.',
+    '.kkkkykgkkkkkkkkkkkkkykgkRk.',
+    '....kgkgk...........kgkgk...',
+    '....kgkyk...........kgkyk...',
+    '.....kkk.............kkk....',
 ];
+const HELMET = [
+    '..yyyyy..',
+    '.yyyyyyy.',
+    'yyyrryyyy',
+    'vvvpvvyyy',
+    'vvvvvvyry',
+    'rrryyyyry',
+    '.rrrrrrr.',
+];
+const sprite = (grid: string[], x0: number, y0: number) =>
+    grid.flatMap((row, y) => [...row].flatMap((c, x) => (MODEL_COLOURS[c] ? [px(x0 + x, y0 + y, 1, 1, MODEL_COLOURS[c])] : [])));
 
 // Manga volumes on the shelf: [spine colour, height].
 const MANGA: [string, number][] = [
@@ -170,12 +194,12 @@ export default function RoomArt({
             </defs>
             <rect x="144" y="21" width="32" height="7" fill="url(#room-led)" />
             <rect x="144" y="36" width="32" height="5" fill="url(#room-led)" />
-            {/* The car: side view, facing left */}
-            <Rects rects={F1_CAR.flatMap((row, y) => [...row].flatMap((c, x) => (F1_COLOURS[c] ? [px(152 + x, 13 + y, 1, 1, F1_COLOURS[c])] : [])))} />
-            {/* Manga volumes and a bookend */}
+            {/* The car: side view, facing left, across the top tier */}
+            <Rects rects={sprite(F1_CAR, 145, 10)} />
+            {/* Manga volumes, with the race helmet as the bookend */}
             <Rects rects={MANGA.map(([c, h], i) => px(147 + i * 2.5, 34 - h, 2, h, c))} />
             <Rects rects={MANGA.map(([, h], i) => px(147 + i * 2.5, 35 - h, 2, 0.6, 'rgba(255,255,255,0.35)'))} />
-            <Rects rects={[px(168, 28, 1, 6, C.steel), px(168, 33, 4, 1, C.steel)]} />
+            <Rects rects={sprite(HELMET, 167, 27)} />
             {/* Boards and brackets */}
             <Rects
                 rects={[
