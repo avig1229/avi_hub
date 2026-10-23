@@ -172,48 +172,89 @@ function Cover({ intro }: { intro: Intro }) {
 }
 
 function Foreword({ intro, level, onOpen }: { intro: Intro; level: Level | null; onOpen: (i: Img) => void }) {
+    const reduce = useReducedMotion();
     const details = level ? intro.details.filter((d) => sees(level, d.level)) : [];
-    // The story splits into two columns either side of the logo.
-    const half = Math.ceil(intro.text.length / 2);
-    const left = intro.text.slice(0, half);
-    const right = intro.text.slice(half);
-    const para = `${serif.className} text-[1.35rem] md:text-[1.6rem] leading-[1.45]`;
+    // The last paragraph becomes the closing statement; the rest wraps around
+    // the logo, split into two sides of roughly equal length.
+    const body = intro.text.length > 1 ? intro.text.slice(0, -1) : intro.text;
+    const closing = intro.text.length > 1 ? intro.text[intro.text.length - 1] : undefined;
+    const total = body.reduce((n, t) => n + t.length, 0);
+    let split = 1;
+    for (let run = body[0]?.length ?? 0; split < body.length && run < total / 2; split++) run += body[split].length;
+    const left = body.slice(0, split);
+    const right = body.slice(split);
+    const para = `${serif.className} text-[1.3rem] md:text-[1.5rem] leading-[1.5]`;
+    const rise = (delay = 0) =>
+        reduce ? {} : { initial: { opacity: 0, y: 18 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: '-10%' }, transition: { duration: 0.8, delay } };
 
     return (
-        <section aria-label="Foreword" className="px-6 md:px-16 py-20 md:py-32">
-            <p className={`${smallCaps} text-center`} style={{ color: RED }}>
-                Foreword
-            </p>
-            <div className="mt-10 md:mt-14 grid lg:grid-cols-12 gap-10 lg:gap-12 items-start">
-                {/* The logo, as a medallion at the centre of the spread */}
-                <div className="lg:col-span-4 lg:col-start-5 lg:row-start-1 lg:sticky lg:top-28 flex justify-center">
-                    <Medallion />
-                </div>
-                <div className="lg:col-span-4 lg:col-start-1 lg:row-start-1 space-y-6 lg:text-right">
-                    {left.map((p, i) => (
-                        <p key={i} className={para}>
+        <section aria-label="Foreword" className="relative px-6 md:px-16 py-20 md:py-32 overflow-hidden">
+            <div className="flex items-center justify-center gap-4" style={{ color: RED }}>
+                <span className="h-px w-10 bg-current opacity-50" />
+                <p className={smallCaps}>Foreword</p>
+                <span className="h-px w-10 bg-current opacity-50" />
+            </div>
+
+            {/* Phones: the mark, then the story. */}
+            <motion.img {...rise()} src={LOGO_MARK} alt="The shRma logo" className="lg:hidden mx-auto mt-10 w-[min(64vw,16rem)] h-auto" />
+
+            {/* Wide screens: the words run around the mark's outline, magazine style. */}
+            <div className="relative mx-auto mt-10 lg:mt-16 max-w-[70rem] lg:grid lg:grid-cols-2 [--w:26rem]">
+                <motion.img
+                    {...rise()}
+                    src={LOGO_MARK}
+                    alt=""
+                    aria-hidden
+                    className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 w-[var(--w)] h-auto z-10 pointer-events-none"
+                />
+                <div className="mt-8 lg:mt-0 lg:text-right">
+                    <Wrap side="left" />
+                    {left.map((t, i) => (
+                        <motion.p key={i} {...rise(0.1 + i * 0.08)} className={`${para} ${i ? 'mt-6' : ''}`}>
                             {i === 0 ? (
                                 <>
-                                    <span className="float-left lg:float-none mr-3 lg:mr-1 mt-1.5 text-6xl md:text-7xl leading-[0.7] italic" style={{ color: RED }}>
-                                        {p.charAt(0)}
+                                    <span className="float-left lg:float-none mr-2 lg:mr-0.5 text-[4.5rem] md:text-[5.5rem] leading-[0.75] italic" style={{ color: RED }}>
+                                        {t.charAt(0)}
                                     </span>
-                                    {p.slice(1)}
+                                    {t.slice(1)}
                                 </>
                             ) : (
-                                p
+                                t
                             )}
-                        </p>
+                        </motion.p>
                     ))}
                 </div>
-                <div className="lg:col-span-4 lg:col-start-9 lg:row-start-1 space-y-6">
-                    {right.map((p, i) => (
-                        <p key={i} className={para}>
-                            {p}
-                        </p>
+                <div className="mt-6 lg:mt-0">
+                    <Wrap side="right" />
+                    {right.map((t, i) => (
+                        <motion.p key={i} {...rise(0.2 + i * 0.08)} className={`${para} ${i ? 'mt-6' : ''}`}>
+                            {t}
+                        </motion.p>
                     ))}
-                    <p className={`${para} italic opacity-70`}>— Avi</p>
                 </div>
             </div>
+
+            {/* The closing line, set big: the part after the first comma in red italics. */}
+            {closing && (
+                <motion.div {...rise(0.1)} className="mx-auto mt-16 lg:mt-24 max-w-[56rem] text-center">
+                    <span className="block mx-auto h-10 w-px mb-8" style={{ background: RED, opacity: 0.5 }} />
+                    <p className={`${serif.className} text-[2rem] md:text-[3.2rem] leading-[1.1] tracking-[-0.01em]`}>
+                        {closing.includes(',') ? (
+                            <>
+                                {closing.slice(0, closing.indexOf(',') + 1)}{' '}
+                                <em style={{ color: RED }}>{closing.slice(closing.indexOf(',') + 1).trim()}</em>
+                            </>
+                        ) : (
+                            closing
+                        )}
+                    </p>
+                    <p className={`${serif.className} mt-8 text-3xl md:text-4xl italic -rotate-3 inline-block`} style={{ color: RED }}>
+                        — Avi
+                    </p>
+                </motion.div>
+            )}
+            {!closing && <p className={`${serif.className} mt-10 text-center text-3xl italic`} style={{ color: RED }}>— Avi</p>}
+
             {details.length > 0 && (
                 <div className="mt-24 md:mt-32 space-y-20">
                     {details.map((d, i) => (
@@ -225,10 +266,28 @@ function Foreword({ intro, level, onOpen }: { intro: Intro; level: Level | null;
     );
 }
 
-// The red shRma mark on its own, sitting on the page between the two columns.
+// The shRma mark (a transparent cut-out). On wide screens the foreword's words
+// wrap around its outline: each half is traced as a polygon (in % of the box,
+// so it scales with the logo). Re-trace these if the logo file changes.
 const LOGO_MARK = '/work/shrma/logo-mark.png';
-function Medallion() {
-    return <img src={LOGO_MARK} alt="The shRma logo" className="block w-[min(70vw,18rem)] h-auto" />;
+const LOGO_RATIO = 695 / 912;
+const LOGO_OUTLINE = {
+    left: 'polygon(100% 0%, 61.4% 0%, 44.3% 2.8%, 35.1% 5.6%, 28.3% 8.3%, 23.2% 11.1%, 19.3% 13.9%, 15.8% 16.7%, 13.6% 19.4%, 12.7% 22.2%, 12.7% 25%, 16% 27.8%, 28.3% 30.6%, 11.4% 33.3%, 6.4% 36.1%, 5% 38.9%, 5% 41.7%, 5.3% 44.4%, 6.6% 47.2%, 9% 50%, 7.5% 52.8%, 7.5% 55.6%, 9.2% 58.3%, 14.3% 61.1%, 19.7% 63.9%, 22.8% 66.7%, 17.8% 69.4%, 12.7% 72.2%, 8.1% 75%, 5.7% 77.8%, 5.7% 80.6%, 5.9% 83.3%, 15.4% 86.1%, 21.9% 88.9%, 68.4% 91.7%, 72.6% 94.4%, 78.9% 97.2%, 100% 100%)',
+    right: 'polygon(0% 0%, 39% 0%, 56.1% 2.8%, 64.9% 5.6%, 71.7% 8.3%, 76.8% 11.1%, 80.7% 13.9%, 84% 16.7%, 86.4% 19.4%, 87.3% 22.2%, 87.3% 25%, 84.2% 27.8%, 71.9% 30.6%, 88.8% 33.3%, 93.6% 36.1%, 94.7% 38.9%, 94.7% 41.7%, 94.7% 44.4%, 93.4% 47.2%, 91.2% 50%, 92.3% 52.8%, 92.3% 55.6%, 90.8% 58.3%, 86% 61.1%, 80.3% 63.9%, 77.4% 66.7%, 82.5% 69.4%, 87.5% 72.2%, 92.1% 75%, 94.5% 77.8%, 94.5% 80.6%, 94.1% 83.3%, 84.9% 86.1%, 78.3% 88.9%, 31.6% 91.7%, 27.6% 94.4%, 21.1% 97.2%, 0% 100%)',
+};
+function Wrap({ side }: { side: 'left' | 'right' }) {
+    return (
+        <div
+            aria-hidden
+            className={`hidden lg:block ${side === 'left' ? 'float-right' : 'float-left'}`}
+            style={{
+                width: 'calc(var(--w) / 2)',
+                height: `calc(var(--w) * ${LOGO_RATIO})`,
+                shapeOutside: LOGO_OUTLINE[side],
+                shapeMargin: '1rem',
+            }}
+        />
+    );
 }
 
 // ── "How geeky are you with design?" ────────────────────────────────────────
