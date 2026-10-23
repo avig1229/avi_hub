@@ -26,7 +26,6 @@ const LEVEL_TEXT: Record<Level, { name: string; tag: string; kid: string }> = {
 const PAPER = '#F1EBE0';
 const INK = '#1C1A17';
 const RED = '#A8221B';
-const GOLD = '#B8913A';
 
 const smallCaps = 'font-sans text-[11px] uppercase tracking-[0.22em]';
 const src = (img: Img, w: number) => (img.src.includes('cdn.sanity.io') ? `${img.src}?w=${w}&auto=format&q=80` : img.src);
@@ -226,17 +225,10 @@ function Foreword({ intro, level, onOpen }: { intro: Intro; level: Level | null;
     );
 }
 
-// The red shRma mark (a transparent cut-out) in a round frame with a fine gold double ring.
+// The red shRma mark on its own, sitting on the page between the two columns.
 const LOGO_MARK = '/work/shrma/logo-mark.png';
 function Medallion() {
-    return (
-        <div className="relative w-[min(78vw,20rem)] aspect-square">
-            <div className="absolute inset-0 rounded-full" style={{ boxShadow: `0 0 0 1px ${GOLD}, 0 30px 60px -25px rgba(28,26,23,0.55)` }} />
-            <div className="absolute inset-[7px] rounded-full overflow-hidden bg-[#120E0C]" style={{ boxShadow: `0 0 0 1px ${GOLD}` }}>
-                <img src={LOGO_MARK} alt="The shRma logo" className="w-full h-full object-contain p-[14%]" />
-            </div>
-        </div>
-    );
+    return <img src={LOGO_MARK} alt="The shRma logo" className="block w-[min(70vw,18rem)] h-auto" />;
 }
 
 // ── "How geeky are you with design?" ────────────────────────────────────────
