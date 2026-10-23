@@ -24,8 +24,13 @@ export default function Model3D({ src, alt, className = '' }: { src: string; alt
         'auto-rotate': true,
         'auto-rotate-delay': 800,
         'interaction-prompt': 'auto',
-        'shadow-intensity': '1',
-        exposure: '1.05',
+        // A neutral studio light and product-photo colour handling, with
+        // soft contact shadows, so fabric reads like a photograph.
+        'environment-image': 'neutral',
+        'tone-mapping': 'neutral',
+        'shadow-intensity': '1.2',
+        'shadow-softness': '0.9',
+        exposure: '1',
         ar: true,
         'ar-modes': 'webxr scene-viewer quick-look',
         style: { width: '100%', height: '100%', background: 'transparent' },

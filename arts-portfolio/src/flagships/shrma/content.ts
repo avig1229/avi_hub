@@ -84,7 +84,7 @@ export const DEFAULT_SEASONS: SeasonDefault[] = [
                 name: 'Not My First Yee-haw Hoodie',
                 key: true,
                 fromCaptions: ['OG Hoodie Back', 'OG Hoodie Front'],
-                // From the Blender mockup: decimated to ~42k polygons with the print baked in.
+                // From the Blender mockup: ~42k polygons, print and shadows baked in, plain lining inside.
                 model: '/work/shrma/models/formosa-cowboy-hoodie.glb',
                 notes: 'The first hoodie I sold out, and still the one people ask for.',
             },
