@@ -188,7 +188,7 @@ function Foreword({ intro, level, onOpen }: { intro: Intro; level: Level | null;
             <div className="mt-10 md:mt-14 grid lg:grid-cols-12 gap-10 lg:gap-12 items-start">
                 {/* The logo, as a medallion at the centre of the spread */}
                 <div className="lg:col-span-4 lg:col-start-5 lg:row-start-1 lg:sticky lg:top-28 flex justify-center">
-                    <Medallion logo={intro.logo} />
+                    <Medallion />
                 </div>
                 <div className="lg:col-span-4 lg:col-start-1 lg:row-start-1 space-y-6 lg:text-right">
                     {left.map((p, i) => (
@@ -226,13 +226,14 @@ function Foreword({ intro, level, onOpen }: { intro: Intro; level: Level | null;
     );
 }
 
-// The red shRma emblem in a round frame with a fine gold double ring.
-function Medallion({ logo }: { logo?: Img }) {
+// The red shRma mark (a transparent cut-out) in a round frame with a fine gold double ring.
+const LOGO_MARK = '/work/shrma/logo-mark.png';
+function Medallion() {
     return (
         <div className="relative w-[min(78vw,20rem)] aspect-square">
             <div className="absolute inset-0 rounded-full" style={{ boxShadow: `0 0 0 1px ${GOLD}, 0 30px 60px -25px rgba(28,26,23,0.55)` }} />
             <div className="absolute inset-[7px] rounded-full overflow-hidden bg-[#120E0C]" style={{ boxShadow: `0 0 0 1px ${GOLD}` }}>
-                {logo && <img src={src(logo, 900)} alt="The shRma logo" className="w-full h-full object-cover scale-[1.35]" />}
+                <img src={LOGO_MARK} alt="The shRma logo" className="w-full h-full object-contain p-[14%]" />
             </div>
         </div>
     );
