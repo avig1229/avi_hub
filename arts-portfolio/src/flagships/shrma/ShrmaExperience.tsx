@@ -184,6 +184,29 @@ function Foreword({ intro, level, onOpen }: { intro: Intro; level: Level | null;
     const left = body.slice(0, split);
     const right = body.slice(split);
     const para = `${serif.className} text-[1.3rem] md:text-[1.5rem] leading-[1.5]`;
+    // Sit the mark in the middle of the text, so the words run above it,
+    // round its outline and on underneath. Measured after layout: the gap
+    // above the mark is half of what's left once the mark's height is taken out.
+    const spread = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const el = spread.current;
+        if (!el) return;
+        const fit = () => {
+            const mark = el.querySelector<HTMLElement>('[data-mark]');
+            const cols = el.querySelectorAll<HTMLElement>('[data-col]');
+            if (!mark || !cols.length || getComputedStyle(mark).display === 'none') return el.style.setProperty('--top', '0px');
+            // a few passes: moving the mark changes how the text wraps
+            for (let i = 0; i < 4; i++) {
+                const tallest = Math.max(...[...cols].map((c) => c.scrollHeight));
+                el.style.setProperty('--top', `${Math.max(0, Math.round((tallest - mark.offsetHeight) / 2))}px`);
+            }
+        };
+        fit();
+        const ro = new ResizeObserver(fit);
+        ro.observe(el);
+        document.fonts?.ready.then(fit);
+        return () => ro.disconnect();
+    }, [intro.text]);
     const rise = (delay = 0) =>
         reduce ? {} : { initial: { opacity: 0, y: 18 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: '-10%' }, transition: { duration: 0.8, delay } };
 
@@ -199,15 +222,16 @@ function Foreword({ intro, level, onOpen }: { intro: Intro; level: Level | null;
             <motion.img {...rise()} src={LOGO_MARK} alt="The shRma logo" className="lg:hidden mx-auto mt-10 w-[min(64vw,16rem)] h-auto" />
 
             {/* Wide screens: the words run around the mark's outline, magazine style. */}
-            <div className="relative mx-auto mt-10 lg:mt-16 max-w-[70rem] lg:grid lg:grid-cols-2 [--w:26rem]">
+            <div ref={spread} className="relative mx-auto mt-10 lg:mt-16 max-w-[54rem] lg:grid lg:grid-cols-2 lg:items-start [--w:19rem] [--top:0px]">
                 <motion.img
                     {...rise()}
+                    data-mark
                     src={LOGO_MARK}
                     alt=""
                     aria-hidden
-                    className="hidden lg:block absolute top-0 left-1/2 -translate-x-1/2 w-[var(--w)] h-auto z-10 pointer-events-none"
+                    className="hidden lg:block absolute top-[var(--top)] left-1/2 -translate-x-1/2 w-[var(--w)] h-auto z-10 pointer-events-none"
                 />
-                <div className="mt-8 lg:mt-0 lg:text-right">
+                <div data-col className="mt-8 lg:mt-0 lg:pr-5 lg:text-right">
                     <Wrap side="left" />
                     {left.map((t, i) => (
                         <motion.p key={i} {...rise(0.1 + i * 0.08)} className={`${para} ${i ? 'mt-6' : ''}`}>
@@ -224,7 +248,7 @@ function Foreword({ intro, level, onOpen }: { intro: Intro; level: Level | null;
                         </motion.p>
                     ))}
                 </div>
-                <div className="mt-6 lg:mt-0">
+                <div data-col className="mt-6 lg:mt-0 lg:pl-5">
                     <Wrap side="right" />
                     {right.map((t, i) => (
                         <motion.p key={i} {...rise(0.2 + i * 0.08)} className={`${para} ${i ? 'mt-6' : ''}`}>
@@ -281,9 +305,12 @@ function Wrap({ side }: { side: 'left' | 'right' }) {
             aria-hidden
             className={`hidden lg:block ${side === 'left' ? 'float-right' : 'float-left'}`}
             style={{
+                // the column's gutter padding is 1.25rem: reach into it so the halves meet at the centre
                 width: 'calc(var(--w) / 2)',
                 height: `calc(var(--w) * ${LOGO_RATIO})`,
-                shapeOutside: LOGO_OUTLINE[side],
+                marginTop: 'var(--top)',
+                [side === 'left' ? 'marginRight' : 'marginLeft']: '-1.25rem',
+                shapeOutside: `${LOGO_OUTLINE[side]} content-box`,
                 shapeMargin: '1rem',
             }}
         />
