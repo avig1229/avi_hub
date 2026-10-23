@@ -23,7 +23,7 @@ export type Spot = {
 export const SPOTS: Spot[] = [
     { id: 'closet', label: 'Closet', hint: 'Coming soon', box: { x: 10, y: 5, w: 62, h: 50 }, stand: { x: 40, y: 68 }, face: 'N' },
     { id: 'arcade', label: 'Arcade', hint: 'Selected work', box: { x: 178, y: 1, w: 38, h: 64 }, stand: { x: 197, y: 80 }, face: 'N' },
-    { id: 'shelf', label: 'Shelf', hint: 'F1 & manga', box: { x: 141, y: 9, w: 38, h: 30 }, stand: { x: 160, y: 68 }, face: 'N' },
+    { id: 'shelf', label: 'Shelf', hint: 'F1, helmet & manga', box: { x: 141, y: 9, w: 38, h: 30 }, stand: { x: 160, y: 68 }, face: 'N' },
     { id: 'records', label: 'Records', hint: 'Play records', box: { x: 8, y: 128, w: 60, h: 42 }, stand: { x: 80, y: 152 }, face: 'W' },
 ];
 
